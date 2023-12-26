@@ -18,8 +18,6 @@ if "forces_array" not in st.session_state:
 
 if "forces_array" not in st.session_state:
     st.session_state.counter_distributed_load = 0
-
-st.write(st.session_state.distributed_load_array)
 st.session_state.selected_option = 0
 st.session_state.selected_option_value=0
 def dachAufbau():
@@ -107,16 +105,25 @@ def lastAuswahl():
         # Erhöhen Sie den Zähler für den nächsten Satz von Widgets
         counter += 1
 
-st.session_state.support_forces = [{"side":"left", "support_force":0},{"side":"right", "support_force":0}]
-st.session_state.maximum_moment = 0
-st.session_state.maximum_moment_position_in_array = 0
-st.session_state.weigh_calculation_option = 0
-st.session_state.side_and_position_max_momentum = []
-st.session_state.max_v = 0
-st.session_state.safety_factor = 1.4
-st.session_state.position = 0
-st.session_state.safe_maximum_moment = 0
-
+# initialisierung von Werten, die während einer sitzung gespeichert werden sollen.
+if "support_forces" not in st.session_state:
+    st.session_state.support_forces = [{"side":"left", "support_force":0},{"side":"right", "support_force":0}]
+if "maximum_moment" not in st.session_state:
+    st.session_state.maximum_moment = 0
+if "maximum_moment_position_in_array" not in st.session_state:
+    st.session_state.maximum_moment_position_in_array = 0
+if "weight_calculation_option" not in st.session_state:
+    st.session_state.weight_calculation_option = 0
+if "side_and_position_max_momentum" not in st.session_state:
+    st.session_state.side_and_position_max_momentum = []
+if "max_v" not in st.session_state:
+    st.session_state.max_v = 0
+if "safe_maximum_moment" not in st.session_state:
+    st.session_state.safe_maximum_moment = 0
+if "position" not in st.session_state:
+    st.session_state.position = 0
+if "safety_factor" not in st.session_state:
+    st.session_state.safety_factor = 1.4
 if "safe_counter_distributed_load" not in st.session_state:
     st.session_state.safe_counter_distributed_load = None
 def do_calculations_system():
@@ -124,23 +131,18 @@ def do_calculations_system():
     st.write(st.session_state.safe_counter_distributed_load)
     if st.session_state.safe_counter_distributed_load is not None:
         st.session_state.distributed_load_array.pop(st.session_state.safe_counter_distributed_load)
-        st.write("etwas wird gelöscht")
         option_distributed_load = st.session_state.selected_option_value * grid
         option_distributed_load = round(option_distributed_load, 2)
         new_distributed_load = {"counter_distributed_load" : st.session_state.safe_counter_distributed_load, "distributed_load" : option_distributed_load}
         st.session_state.distributed_load_array.insert(st.session_state.safe_counter_distributed_load, new_distributed_load)
     else:
         option_distributed_load = st.session_state.selected_option_value * grid
-        st.write(st.session_state.safe_counter_distributed_load)
         st.session_state.safe_counter_distributed_load = st.session_state.counter_distributed_load
-        st.write(st.session_state.safe_counter_distributed_load)
         option_distributed_load = round(option_distributed_load, 2)
         new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
         st.session_state.distributed_load_array.append(new_distributed_load)
         st.session_state.counter_distributed_load = st.session_state.safe_counter_distributed_load
         st.session_state.counter_distributed_load += 1
-        st.write("erstes mal hinzugefügt")
-        st.write(st.session_state.safe_counter_distributed_load)
     st.write(st.session_state.safe_counter_distributed_load)
     #Bestimmung der Auflagerkräfte
     resulting_forces = 0
@@ -188,10 +190,11 @@ def do_calculations_system():
             st.session_state.maximum_moment += st.session_state.distributed_load_array[number_of_content_d]['distributed_load'] * (length**2) / 8
             number_of_content_d += 1
         st.session_state.position = length/2
-    elif (len(st.session_state.distributed_load_array) == 0 or (len(st.session_state.forces_array) == 0 and st.session_state.distributed_load_array[0]['distributed_load'] == 0)) and len(st.session_state.forces_array) != 0: 
+        st.write("es werden nur streckenlasten berechnet")
+    elif (len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]['distributed_load'] == 0) and len(st.session_state.forces_array) != 0: 
         st.session_state.position = 0
         st.session_state.maximum_moment = 0
-        st.session_state.weigh_calculation_option = 2
+        st.session_state.weight_calculation_option = 2
         for obj in st.session_state.forces_array:
             if obj['position'] > length / 2:
                 # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
@@ -224,11 +227,11 @@ def do_calculations_system():
         else:
             support_number = 1
 
-        st.session_state.max_v = float(st.session_state.supportForces[support_number]['support_force'])
+        st.session_state.max_v = float(st.session_state.support_forces[support_number]['support_force'])
 
         # Berechnung des maximalen Moments im Bauteil
         # Auflager der Seite miteinbeziehen
-        st.session_state.maximum_moment += float(st.session_state.supportForces[support_number]['support_force']) * float(st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"])
+        st.session_state.maximum_moment += float(st.session_state.support_forces[support_number]['support_force']) * float(st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"])
         indexCounter = 0
         # Überprüfen, ob das maximale Moment auf der rechten oder linken Hälfte ist und anschließende Berechnung
         while indexCounter < len(st.session_state.forces_array):
@@ -243,6 +246,7 @@ def do_calculations_system():
                 indexCounter += 1  # Hochzählen, damit jedes Objekt einzeln abgefragt wird.
             else:
                 indexCounter += 1
+        st.write("es werden nur punktlasten berechnet")
     elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0:
         st.session_state.weight_calculation_option = 3
         st.session_state.maximum_moment = 0
@@ -380,6 +384,11 @@ def do_calculations_system():
                 * (float(st.session_state.side_and_position_max_momentum[1]) ** 2) / 2
             )
             number_of_content_d += 1
+        st.write("es werden punktlasten und streckenlasten berechnet")
+    else:
+        st.write("es werden keine Lasten zur berechnung genutzt")
+        st.write(st.session_state.distributed_load_array)
+        st.write(st.session_state.forces_array)
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
     st.session_state.safe_maximum_moment = 0
     #Moment vor dem Einfluss des Sicherheitsbeiwerts sichern.
@@ -421,66 +430,107 @@ with st.container():
         st.subheader("Maximales Moment")
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
-
+        
 # Kleine Datenbank mit Werten (klein)
 # Eigengewicht hinzufügen
 st.session_state.data_storage_wood = {
-    "8/16": {"availableW": 341, "availableITrägheitsmoment": 2730, "h": 16, "availableArea": 128, "weightPerMeterInKG": 7.68},
-    "10/20": {"availableW": 667, "availableITrägheitsmoment": 6670, "h": 20, "availableArea": 200, "weightPerMeterInKG": 12},
-    "12/24": {"availableW": 1150, "availableITrägheitsmoment": 13820, "h": 24, "availableArea": 288, "weightPerMeterInKG": 17.3},
-    "13/18": {"availableW": 702, "availableITrägheitsmoment": 6320, "h": 18, "availableArea": 234, "weightPerMeterInKG": 14},
-    "14/28": {"availableW": 1830, "availableITrägheitsmoment": 25610, "h": 28, "availableArea": 392, "weightPerMeterInKG": 23.4},
-    "16/24": {"availableW": 1536, "availableITrägheitsmoment": 18430, "h": 24, "availableArea": 384, "weightPerMeterInKG": 23},
-    "18/26": {"availableW": 972, "availableITrägheitsmoment": 8750, "h": 26, "availableArea": 468, "weightPerMeterInKG": 28}
+    "8/16": {"available_w": 341, "availableITrägheitsmoment": 2730, "h": 16, "availableArea": 128, "weightPerMeterInKG": 7.68},
+    "10/20": {"available_w": 667, "availableITrägheitsmoment": 6670, "h": 20, "availableArea": 200, "weightPerMeterInKG": 12},
+    "12/24": {"available_w": 1150, "availableITrägheitsmoment": 13820, "h": 24, "availableArea": 288, "weightPerMeterInKG": 17.3},
+    "13/18": {"available_w": 702, "availableITrägheitsmoment": 6320, "h": 18, "availableArea": 234, "weightPerMeterInKG": 14},
+    "14/28": {"available_w": 1830, "availableITrägheitsmoment": 25610, "h": 28, "availableArea": 392, "weightPerMeterInKG": 23.4},
+    "16/24": {"available_w": 1536, "availableITrägheitsmoment": 18430, "h": 24, "availableArea": 384, "weightPerMeterInKG": 23},
+    "18/26": {"available_w": 972, "availableITrägheitsmoment": 8750, "h": 26, "availableArea": 468, "weightPerMeterInKG": 28}
 }
 
+if "tension_rd_wood" not in st.session_state: 
+    st.session_state.tension_rd_wood = 1.5
+if "needed_w" not in st.session_state: 
+    st.session_state.needed_w = 0
+if "number_k0" not in st.session_state:
+    st.session_state.number_k0 = 312
+if "number_k0" not in st.session_state:
+    st.session_state.maximum_moment_check = 0
 def check_profil():
-    cross_section_w = input("Bitte Querschnitt des Holzes eingeben: ")  # Annahme: Benutzereingabe für Querschnitt
-    weight = float(st.session_state.storage_list[cross_section_w]["weightPerMeterInKG"])
+    weight = 0
+    weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
     # kg in kN umwandeln
     weight = weight * length / 100
+    st.session_state.maximum_moment_check = st.session_state.maximum_moment
     if st.session_state.weight_calculation_option == 1:
-        st.session_state.maximum_moment += weight
-        print("Es gibt nur Momente")
+        st.session_state.maximum_moment_check += weight
     elif st.session_state.weight_calculation_option == 2:
-        st.session_state.maximum_moment += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
-        print("Es gibt nur Punktlasten")
+        st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
     elif st.session_state.weight_calculation_option == 3:
-        st.session_state.maximum_moment += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
-        print("Es gibt alles")
+        st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
     # Bei den Momentenbestimmungen auch die Position bestimmen
-    st.session_state.needed_w = (st.session_state.maximum_moment * 100) / st.session_state.tension_rd_wood
+    st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd_wood
+    #anpassen an die Zahl der Variante, wenn es möglich ist
+    if st.session_state.needed_w != 0:
+        col2.header("Ergebnisübersicht Variante 1")
     # Zugriff auf Datenbank und Suche nach passendem W.
-    if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_w]["availableW"]:
-        print("Das gewählte Profil passt nicht.")
+    if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
+        col2.write("Das gewählte Profil passt nicht.")
+        col2.write("erf W > vorh W")
+        col2.write(f"{st.session_state.needed_w} > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}")
         # Neue Querschnitt wählen, wenn nötig.
         # Weitere Rechnungen einfügen oder Vergleich für Gebrauchstauglichkeit oder Schubspannungsnachweis + Überprüfung, ob es einen besseren Querschnitt gibt!!!
     else:
-        print("Passt Tragfähigkeit.")
-
         # Die 1 in den Texten anpassen, wenn mehrere Varianten möglich sind!!!
-
-        if (length * 100) / st.session_state.data_storage_wood[cross_section_w]["h"] > 15:
+        if (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] > 15:
             # Gebrauchstauglichkeitsnachweis
-            needed_i_traegheitsmoment = st.session_state.number_k0 * st.session_state.safe_maximum_moment * (length * 100)
-            if needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_w]["availableITrägheitsmoment"]:
-                print("Passt Gebrauchstauglichkeitsnachweis.")
-                print("Das Profil der Variante 1 besteht die Prüfung.")
+            needed_i_traegheitsmoment = st.session_state.number_k0 * (st.session_state.safe_maximum_moment/100) * (length * 100)
+            if needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
+                col2.write("Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.")
+                col2.write("erf W < vorh W")
+                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}")
+                col2.write("erf I < vorh I")
+                col2.write(f"{needed_i_traegheitsmoment} < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}")
             else:
-                print("Neuen Querschnitt wählen wegen Gebrauchstauglichkeitsnachweis.")
-                print("Das Profil der Variante 1 besteht die Prüfung nicht.")
-        elif (length * 100) / st.session_state.data_storage_wood[cross_section_w]["h"] < 11:
+                col2.write("Das Profil der Variante 1 besteht die Prüfung nicht.")
+                col2.write("Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises.") 
+                col2.write("erf W < vorh W")
+                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
+                col2.write("erf I > vorh I")
+                col2.write(f"{needed_i_traegheitsmoment} > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}")         
+        elif (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] < 11:
             # Schubnachweis
             print(st.session_state.max_v)
             needed_area = (3 * st.session_state.max_v) / (2 * st.session_state.schub_rd)
-            if needed_area <= st.session_state.data_storage_wood[cross_section_w]["availableArea"]:
-                print("Passt Schubnachweis.")
-                print("Das Profil der Variante 1 besteht die Prüfung.")
+            if needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
+                col2.write("Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.")
+                col2.write("erf W < vorh W")
+                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
+                col2.write("erf A < vorh A")
+                col2.write(f"{needed_area} < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}")
             else:
-                print("Neuen Querschnitt wählen wegen Schubnachweis.")
-                print("Das Profil der Variante 1 besteht die Prüfung nicht.")
+                col2.write("Das Profil der Variante 1 besteht die Prüfung nicht.")
+                col2.write("Neuen Querschnitt wählen aufgrund des Schubnachweises.") 
+                col2.write("erf W < vorh W")
+                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
+                col2.write("erf A > vorh A")
+                col2.write(f"{needed_area} > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}")
         else:
-            print("Das Profil der Variante 1 besteht die Prüfung.")
+            col2.write("Das Profil der Variante 1 besteht die Prüfung.")
+            col2.write("Es ist kein Nachweis der Gebrauchstauglichkeit oder der Spannung notwendig.")
+            col2.write("erf W < vorh W")
+            col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
+def next_variant():
+    counter = 0  # Initialisieren Sie den Zähler
+    # Materialauswahl
+    material_choice = st.selectbox("Material", ["Kantholz", "IPE"])
+    st.text("Profil")
+    if material_choice == "Kantholz":
+        cross_section_wood_input = st.text_input("Querschnitt (b/h)", value="8/16")
+        if st.button("Prüfen"):
+            check_profil()
+    elif material_choice == "IPE":
+        cross_section_ipe_input = st.text_input("Querschnitt", placeholder="Platzhalter")
+        if st.button("Prüfen"):
+            check_profil()
+    if st.checkbox("weitere Variante"):
+        next_variant()
+    counter += 1
 
 with st.container():
     col1, col2 = st.columns(2)
@@ -499,9 +549,13 @@ with st.container():
             cross_section_ipe_input = st.text_input("Querschnitt", placeholder="Platzhalter")
             if st.button("Prüfen"):
                 check_profil()
+        if st.checkbox("weitere Variante"):
+            next_variant()
+
     with col2:
-        st.header("Ergebnisübersicht")
+        if st.session_state.needed_w == 0:
+            st.header("Ergebnisübersicht")
 
-
-# Weitere Informationen
-st.header("Weitere Informationen")
+with st.container():
+    # Weitere Informationen
+    st.header("Weitere Informationen")
