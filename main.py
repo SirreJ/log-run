@@ -2,39 +2,68 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw, ImageFont
 
-#Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
+# Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
 
 st.set_page_config(page_title="Profilberechnung Einfeldträger", page_icon=None, layout='wide')
 
-
-#Die Werte werden zwar dargestellt, aber haben noch keine möglichkeit in meiner Berechnung berücksichtigt zu werden!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-#Auswahlmöglichkeiten für den Dachaufbau
-
-if "forces_array" not in st.session_state:
+# Auswahlmöglichkeiten für den Dachaufbau
+if "distributed_load_array" not in st.session_state:
     st.session_state.distributed_load_array = []
-
-if "forces_array" not in st.session_state:
+if "counter_distributed_load" not in st.session_state:
     st.session_state.counter_distributed_load = 0
-st.session_state.selected_option = 0
-st.session_state.selected_option_value=0
-def dachAufbau():
+if "selected_option" not in st.session_state:
+    st.session_state.selected_option = 0
+if "selected_option_value" not in st.session_state:
+    st.session_state.selected_option_value=0
+# Bild Laden
+if "image_length_grid" not in st.session_state:
+    image_path_length_grid = 'dachaufbau\Spannweite_Lasteinzugsbreite.jpg'
+    image_length_grid = Image.open(image_path_length_grid)
+def image_length_grid_place(length, grid):       
+    # interaktive Beschriftung des Bilds
+    draw = ImageDraw.Draw(image_length_grid)
+    # Erste Beschriftung
+    text_position1 = (325, 150)
+    text_content1 = (f'{str(length)}m')
+    text_color1 = (0, 0, 0)
+    # Zweite Beschriftung
+    text_position2 = (60, 325)
+    text_content2 = (f'{str(grid)}m')
+    text_color2 = (0, 0, 0)
+    # Beschriftungen auf das Bild zeichnen
+    font = ImageFont.truetype("arial.ttf", 30)
+    draw.text(text_position1, text_content1, font=font, fill=text_color1)
+    draw.text(text_position2, text_content2, font=font, fill=text_color2)
+    st.image(image_length_grid)
+if "image_dachaufbau" not in st.session_state:
+    st.session_state.image_dachaufbau = 0
+def dach_aufbau():
     # Dictionary mit den Werten für jede Dachaufbauoption
     option_values = {
-        "keine Dachaufbau": 0.0,
+        "kein Dachaufbau": 0.0,
         "extensive Dachbegrünung": 2.26,
         "intensive Dachbegrünung": 3.51,
         "leichter Dachaufbau": 1.26,
         "schwerer Dachaufbau": 2.0
     }
+    # Bilder Liste
+    image_dachaufbau_list = {
+        'extensive Dachbegrünung':'dachaufbau\Pikto_Dachaufbau_extensiv.jpg',
+        'intensive Dachbegrünung':'dachaufbau\Pikto_Dachaufbau_intensiv.jpg',
+        'leichter Dachaufbau':'dachaufbau\Pikto_Dachaufbau_leicht.jpg',
+        'schwerer Dachaufbau':'dachaufbau\Pikto_Dachaufbau_schwer.jpg',
+        'kein Dachaufbau':'dachaufbau\Pikto_kein_Dachaufbau.jpg'
+    }
     # st.selectbox für die Auswahl des Dachaufbaus
     st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()))
     st.session_state.selected_option_value = option_values[st.session_state.selected_option]
+    # Passendes Bild Laden
+    image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
+    st.session_state.image_dachaufbau = Image.open(image_dachaufbau_auswahl)
     # Zeigen Sie den ausgewählten Wert neben der Option an
     st.write(f"{st.session_state.selected_option} : {st.session_state.selected_option_value} kN/m²")
-
 #aufnahme der Streckenlasten
 def distributed_load_information(distributed_load, counter_distributed_load):
     counter_distributed_load=st.session_state.counter_distributed_load
@@ -47,15 +76,10 @@ def distributed_load_information(distributed_load, counter_distributed_load):
     st.session_state.distributed_load_array.append(new_distributed_load)
     # Anzahl an Streckenlasten erhöhen
     st.session_state.counter_distributed_load += 1
-    st.text(distributed_load)
-    st.text(st.session_state.distributed_load_array)
-
 if "forces_array" not in st.session_state:
     st.session_state.forces_array = []
-
 if "counter_forces" not in st.session_state:
     st.session_state.counter_forces = 0
-
 #Aufnahme der Puntktlasten
 def point_load_properties(length, position, point_load, counter_forces):
     # Die Eingabe soll nicht möglich sein, wenn die Position die Länge überschreitet
@@ -67,15 +91,9 @@ def point_load_properties(length, position, point_load, counter_forces):
     new_force = {"counter_forces": counter_forces, "point_load": point_load, "position": position}
     st.session_state.forces_array.append(new_force)
     st.session_state.counter_forces += 1
-    st.text(point_load)
-    st.text(position)
-    st.text(st.session_state.forces_array)
-    st.text(st.session_state.counter_forces)
-
 #Auswahlmöglichkeiten für die genaue Lasteingabe
-def lastAuswahl():
-    counter = 0  # Initialisieren Sie den Zähler
-    
+def last_auswahl():
+    counter = 1
     while True:
         # st.radio für die Auswahl von "Streckenlast" oder "Punktlast"
         # Weisen Sie eindeutige Schlüssel mit dem Zähler zu
@@ -95,16 +113,13 @@ def lastAuswahl():
             position = float(position_input) if position_input else 0
             if st.button(f"Einfügen {counter}"):
                 point_load_properties(length, position, point_load, st.session_state.counter_forces)
+        # Erhöhen Sie den Zähler für den nächsten Satz von Widgets
+        counter += 1
         # st.checkbox für die Entscheidung, ob weitere Eingaben gemacht werden sollen
         checkbox_label = "weitere Lasteingabe ({})".format(counter)
-
         # Eindeutiger Schlüssel für die Checkbox
         if not st.checkbox(checkbox_label, key=f"checkbox_{counter}"):
             break
-        
-        # Erhöhen Sie den Zähler für den nächsten Satz von Widgets
-        counter += 1
-
 # initialisierung von Werten, die während einer sitzung gespeichert werden sollen.
 if "support_forces" not in st.session_state:
     st.session_state.support_forces = [{"side":"left", "support_force":0},{"side":"right", "support_force":0}]
@@ -128,7 +143,6 @@ if "safe_counter_distributed_load" not in st.session_state:
     st.session_state.safe_counter_distributed_load = None
 def do_calculations_system():
     # Wert des ausgewählten Dachaufbaus
-    st.write(st.session_state.safe_counter_distributed_load)
     if st.session_state.safe_counter_distributed_load is not None:
         st.session_state.distributed_load_array.pop(st.session_state.safe_counter_distributed_load)
         option_distributed_load = st.session_state.selected_option_value * grid
@@ -143,7 +157,6 @@ def do_calculations_system():
         st.session_state.distributed_load_array.append(new_distributed_load)
         st.session_state.counter_distributed_load = st.session_state.safe_counter_distributed_load
         st.session_state.counter_distributed_load += 1
-    st.write(st.session_state.safe_counter_distributed_load)
     #Bestimmung der Auflagerkräfte
     resulting_forces = 0
     support_force_a_vertical = 0
@@ -190,7 +203,6 @@ def do_calculations_system():
             st.session_state.maximum_moment += st.session_state.distributed_load_array[number_of_content_d]['distributed_load'] * (length**2) / 8
             number_of_content_d += 1
         st.session_state.position = length/2
-        st.write("es werden nur streckenlasten berechnet")
     elif (len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]['distributed_load'] == 0) and len(st.session_state.forces_array) != 0: 
         st.session_state.position = 0
         st.session_state.maximum_moment = 0
@@ -246,26 +258,25 @@ def do_calculations_system():
                 indexCounter += 1  # Hochzählen, damit jedes Objekt einzeln abgefragt wird.
             else:
                 indexCounter += 1
-        st.write("es werden nur punktlasten berechnet")
     elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0:
         st.session_state.weight_calculation_option = 3
         st.session_state.maximum_moment = 0
         for obj in st.session_state.forces_array:
+            # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
             if obj['position'] > length / 2:
-                # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
                 side = "right"
                 # Füge die neue Eigenschaft zum forces_array hinzu
                 obj['side'] = side
-                # Falls die Länge doch noch gebraucht wird, sollte dieser neue Wert in das Array mit einem neuen Namen aufgenommen werden
+                # Die Entfernung zum Auflager B wird erstellt
                 obj['position'] = length - obj['position']
             elif obj['position'] <= length / 2:
-                # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
                 side = "left"
                 # Füge die neue Eigenschaft zum forces_array hinzu
                 obj['side'] = side
         left_side_moment_point_load = 0
         right_side_moment_point_load = 0
         counter_forces_array = 0
+        # Überprüfung, auf welcher Seite das Moment liegt.
         while counter_forces_array < len(st.session_state.forces_array):
             if st.session_state.forces_array[counter_forces_array]['side'] == "left":
                 left_side_moment_point_load += st.session_state.forces_array[counter_forces_array]['point_load'] * st.session_state.forces_array[counter_forces_array]['position']
@@ -291,69 +302,66 @@ def do_calculations_system():
             st.session_state.position_max_momentum += st.session_state.support_forces[0]['support_force']
             last_added_position = 0
             # Last zur Bestimmung der Position, wenn das maximale Moment bei dem Umschlagpunkt von positiv zu negativ an der Position einer Einzellast
-            while index_counter_position < len(st.session_state.forces_array) and (st.session_state.position_max_momentum > 0 or position_found == True):
-                if st.session_state.forces_array[index_counter_position]['side'] == "left":
-                    st.session_state.position_max_momentum -= st.session_state.forces_array[index_counter_position]['point_load']
-                    st.session_state.position_max_momentum -= position_added_distributed_load * (
-                        float(st.session_state.forces_array[index_counter_position]['position']) - last_added_position
-                    )
-                    last_added_position = st.session_state.forces_array[index_counter_position]['position']
-                    # Überprüfung, ob die folgenden Werte noch links sind
-                    count_left = 0
-                    for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
-                        if st.session_state[index_count_side]['side'] == 'left':
-                            count_left += 1
-                    index_counter_position += 1
-                    # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
-                    position_between_point_loads = 0
-                    position_between_point_loads = st.session_state.position_max_momentum / float(position_added_distributed_load)
-                    if index_counter_position >= len(st.session_state.forces_array):
+            while (index_counter_position <= len(st.session_state.forces_array)) and st.session_state.position_max_momentum > 0:
+                # Die Längenüberprüfung wird ausgeführt, damit das Moment auch nach der letzten Punktlast liegen kann.
+                if (st.session_state.forces_array[index_counter_position]['side'] == "left") or len(st.session_state.forces_array) >= index_counter_position+1:
+                        if len(st.session_state.forces_array) >= index_counter_position:
+                            st.session_state.position_max_momentum -= st.session_state.forces_array[index_counter_position]['point_load']
+                        st.session_state.position_max_momentum -= position_added_distributed_load * (float(st.session_state.forces_array[index_counter_position]['position']) - last_added_position)
+                        last_added_position = st.session_state.forces_array[index_counter_position]['position']
+                        # Überprüfung, ob die folgenden Werte noch links sind
+                        count_left = 0
+                        for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
+                            if st.session_state[index_count_side]['side'] == 'left':
+                                count_left += 1
+                        index_counter_position += 1
+                        # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
                         st.session_state.position = last_added_position
-                    else:
-                        if (
-                            position_between_point_loads < float(st.session_state.forces_array[index_counter_position]['position'] - last_added_position)
-                            and st.session_state.forces_array[index_counter_position]['side'] == "left"
-                        ) or (count_left == 0):
+                        position_between_point_loads = 0
+                        position_between_point_loads = st.session_state.position_max_momentum / float(position_added_distributed_load)
+                        if st.session_state.position_max_momentum < 0:
+                            st.session_state.position = last_added_position
+                            break
+                        elif index_counter_position == len(st.session_state.forces_array) or (position_between_point_loads < float(st.session_state.forces_array[index_counter_position]['position'] - last_added_position)and st.session_state.forces_array[index_counter_position]['side'] == "left") or (count_left == 0):
                             st.session_state.position = last_added_position + position_between_point_loads
-                            position_found = True
+                            break
                 else:
-                    index_counter_position += 1
+                        index_counter_position += 1
         else:
             st.session_state.side_and_position_max_momentum.append(side := "right")
             # Streckenlasten addieren, damit zur weiteren Verwendung in der Positionsbestimmung
             st.session_state.position_max_momentum += st.session_state.support_forces[1]['support_force']
             last_added_position = 0
             # Last zur Bestimmung der Position, wenn das maximale Moment bei dem Umschlagpunkt von positiv zu negativ an der Position einer Einzellast
-            while index_counter_position < len(st.session_state.forces_array) and (st.session_state.position_max_momentum > 0 or position_found == True):
-                if st.session_state.forces_array[index_counter_position]['side'] == "right":
-                    st.session_state.position_max_momentum -= st.session_state.forces_array[index_counter_position]['point_load']
-                    st.session_state.position_max_momentum -= position_added_distributed_load * (
-                        float(st.session_state.forces_array[index_counter_position]['position']) - last_added_position
-                    )
-                    last_added_position = st.session_state.forces_array[index_counter_position]['position']
-                    # Überprüfung, ob die folgenden Werte noch links sind
-                    count_left = 0
-                    for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
-                        if st.session_state[index_count_side]['side'] == 'right':
-                            count_left += 1
-                    index_counter_position += 1
-                    # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
-                    position_between_point_loads = 0
-                    position_between_point_loads = st.session_state.position_max_momentum / float(position_added_distributed_load)
-                    if index_counter_position >= len(st.session_state.forces_array):
+            while (index_counter_position <= len(st.session_state.forces_array)) and st.session_state.position_max_momentum > 0:
+                # Die Längenüberprüfung wird ausgeführt, damit das Moment auch nach der letzten Punktlast liegen kann.
+                if (st.session_state.forces_array[index_counter_position]['side'] == "right") or len(st.session_state.forces_array) >= index_counter_position+1:
+                        if len(st.session_state.forces_array) >= index_counter_position:
+                            st.session_state.position_max_momentum -= st.session_state.forces_array[index_counter_position]['point_load']
+                        st.session_state.position_max_momentum -= position_added_distributed_load * (float(st.session_state.forces_array[index_counter_position]['position']) - last_added_position)
+                        last_added_position = st.session_state.forces_array[index_counter_position]['position']
+                        # Überprüfung, ob die folgenden Werte noch links sind
+                        count_right = 0
+                        for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
+                            if st.session_state[index_count_side]['side'] == 'right':
+                                count_right += 1
+                        index_counter_position += 1
+                        # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
                         st.session_state.position = last_added_position
-                    else:
-                        if (
-                            position_between_point_loads < float(st.session_state.forces_array[index_counter_position]['position'] - last_added_position)
-                            and st.session_state.forces_array[index_counter_position]['side'] == "right"
-                        ) or (count_left == 0):
+                        position_between_point_loads = 0
+                        position_between_point_loads = st.session_state.position_max_momentum / float(position_added_distributed_load)
+                        st.write(position_between_point_loads)
+                        if st.session_state.position_max_momentum < 0:
+                            st.session_state.position = last_added_position
+                            break
+                        elif index_counter_position == len(st.session_state.forces_array) or (position_between_point_loads < float(st.session_state.forces_array[index_counter_position]['position'] - last_added_position)and st.session_state.forces_array[index_counter_position]['side'] == "right") or (count_right == 0):
                             st.session_state.position = last_added_position + position_between_point_loads
-                            position_found = True
+                            break
                 else:
-                    index_counter_position += 1
+                        index_counter_position += 1
         # Sortieren der Werte nach ihrem Index
         st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
-        st.session_state.position = format(st.session_state.position, '.2f')  # Rundet auf zwei Dezimalstellen
+        st.session_state.position = round(st.session_state.position, 2)  # Rundet auf zwei Dezimalstellen
         st.session_state.side_and_position_max_momentum.append(st.session_state.position)
         support_number = None
         # Herausfinden, welches Auflager zur Schnittberechnung geeignet ist
@@ -384,11 +392,6 @@ def do_calculations_system():
                 * (float(st.session_state.side_and_position_max_momentum[1]) ** 2) / 2
             )
             number_of_content_d += 1
-        st.write("es werden punktlasten und streckenlasten berechnet")
-    else:
-        st.write("es werden keine Lasten zur berechnung genutzt")
-        st.write(st.session_state.distributed_load_array)
-        st.write(st.session_state.forces_array)
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
     st.session_state.safe_maximum_moment = 0
     #Moment vor dem Einfluss des Sicherheitsbeiwerts sichern.
@@ -396,53 +399,151 @@ def do_calculations_system():
         st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
+    st.write(st.session_state.side_and_position_max_momentum[0])
+    if st.session_state.side_and_position_max_momentum[0] == 'right':
+        st.session_state.position = length - st.session_state.position 
+def drawing_system():
+    # Systemlinie
+    startpoint_a = 0
+    endpoint_b = 10
+    middle_of_canvas_y = 5
+    x_values_systemline = np.array([startpoint_a, endpoint_b])
+    y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
+    # Matplotlib-Funktion zum Zeichnen der Linie
+    fig, ax = plt.subplots()
+    ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+    ax.set_title('statisches System')
+    plt.text(startpoint_a+((endpoint_b-startpoint_a)/2), middle_of_canvas_y-0.5, f'{length}m', fontsize=12, color='black', ha='center', va='center')
+    #Auflager
+    #Festlager
+    x_values_fixed_support = np.array([startpoint_a, startpoint_a+0.5, startpoint_a-0.5, startpoint_a])
+    y_values_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
+    ax.plot(x_values_fixed_support, y_values_fixed_support, marker=',', linestyle='-', color='black')
+    plt.text(startpoint_a-1, middle_of_canvas_y-0.5, 'A', fontsize=12, color='black', ha='center', va='center')
+    counter_slashes_fixed = 0
+    while (counter_slashes_fixed<5):
+         x_values_fixed_support_slash = np.array([startpoint_a-0.6+0.2*counter_slashes_fixed, startpoint_a-0.4+0.2*counter_slashes_fixed])
+         y_values_fixed_support_slash = np.array([middle_of_canvas_y-1.3, middle_of_canvas_y-1])
+         ax.plot(x_values_fixed_support_slash, y_values_fixed_support_slash, marker=',', linestyle='-', color='black')
+         counter_slashes_fixed += 1
+    #Lostlager
+    x_values_not_fixed_support = np.array([endpoint_b, endpoint_b+0.5, endpoint_b-0.5, endpoint_b])
+    y_values_not_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
+    ax.plot(x_values_not_fixed_support, y_values_not_fixed_support, marker=',', linestyle='-', color='black')
+    plt.text(endpoint_b+1, middle_of_canvas_y-0.5, 'B', fontsize=12, color='black', ha='center', va='center')
+    x_value_litle_line = np.array([endpoint_b-0.7, endpoint_b+0.7])
+    y_value_litle_line = np.array([middle_of_canvas_y-1.2, middle_of_canvas_y-1.2])
+    ax.plot(x_value_litle_line, y_value_litle_line, marker=',', linestyle='-', color='black')
+    counter_slashes_fixed = 0
+    while (counter_slashes_fixed<5):
+         x_values_not_fixed_support_slash = np.array([endpoint_b-0.6+0.2*counter_slashes_fixed, endpoint_b-0.4+0.2*counter_slashes_fixed])
+         y_values_not_fixed_support_slash = np.array([middle_of_canvas_y-1.5, middle_of_canvas_y-1.2])
+         ax.plot(x_values_not_fixed_support_slash, y_values_not_fixed_support_slash, marker=',', linestyle='-', color='black')
+         counter_slashes_fixed += 1
+    #Streckenlast
+    for arrow_field in st.session_state.distributed_load_array:
+        if arrow_field["distributed_load"] != 0:
+            length_between_supports = endpoint_b-startpoint_a
+            x_value_distributed = np.array([startpoint_a, endpoint_b, endpoint_b, startpoint_a])
+            y_value_distributed = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
+            ax.plot(x_value_distributed, y_value_distributed, marker=',', linestyle='-', color='black')
+            length_between_supports = length_between_supports/7
+            counter_arrows_dist = 0
+            while counter_arrows_dist<8:
+                force_location_x = startpoint_a + length_between_supports*counter_arrows_dist
+                x_value_tip = np.array([force_location_x-0.1,force_location_x,force_location_x+0.1])
+                y_value_tip = np.array([middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"]])
+                ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
+                x_value_stick = np.array([force_location_x, force_location_x])
+                y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
+                ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
+                counter_arrows_dist +=1
+            plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=12, color='black', ha='left', va='center')       
+    #Punktlast
+    if len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]["distributed_load"] ==0:
+        for arrow in st.session_state.forces_array:
+            force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
+            x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
+            y_value_tip = np.array([middle_of_canvas_y+0.4, middle_of_canvas_y+0.1, middle_of_canvas_y+0.4])
+            ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
+            x_value_stick = np.array([force_location_x, force_location_x])
+            y_value_stick = np.array([middle_of_canvas_y+0.1, middle_of_canvas_y+4])
+            ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
+            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
+    else:
+        for arrow in st.session_state.forces_array:
+            force_location_x = startpoint_a + arrow["position"]
+            x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
+            y_value_tip = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array)])
+            ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
+            x_value_stick = np.array([force_location_x, force_location_x])
+            y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
+            ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
+            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
 
+    plt.xlim(-2,12)
+    plt.ylim(-2,12)
+    plt.axis('off')
+    st.pyplot(fig)
 st.header("Vordimensionierung Einfeldträger")
 st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet. ")
-with st.container():
-    col1, col2 = st.columns(2)
+# Statisches System
+with st.container(border=True):
+    col1, col3 = st.columns(2)
     with col1:
         # Eingaben für das statische System
-        st.subheader("Eingabe für das statische System")
-        length_input = st.text_input ("Spannweite", 5)
-        length = float(length_input)
-
-        grid_input = st.text_input("Lasteinzugsbreite", 3)
-        grid = float(grid_input)
-       
-        dachAufbau()
-
+        st.header("Eingabe für das statische System")
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                length_input = st.text_input ("Spannweite (m)", 5)
+                length = float(length_input)
+                grid_input = st.text_input("Lasteinzugsbreite (m)", 3)
+                grid = float(grid_input)
+            with col2:
+                image_length_grid_place(length, grid)
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                dach_aufbau()
+            with col2:
+                st.image(st.session_state.image_dachaufbau)
         if st.checkbox("Genaue Lasteingabe"):
-            lastAuswahl()
-
+            last_auswahl()
         if st.button("Berechnen"):
             do_calculations_system()
-    with col2:
+    with col3:
         # Darstellungsbereich
         st.header("Darstellungsbereich")
         #Darstellung
-
+        drawing_system()
         # Ergebnissausgabe
         st.subheader("Auflagerreaktionen A und B")
         #st.text(auflagerreaktion)
         st.write(f"A = {st.session_state.support_forces[0]['support_force']} kN und B = {st.session_state.support_forces[1]['support_force']} kN")
-
         st.subheader("Maximales Moment")
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
-        
-# Kleine Datenbank mit Werten (klein)
-# Eigengewicht hinzufügen
-st.session_state.data_storage_wood = {
-    "8/16": {"available_w": 341, "availableITrägheitsmoment": 2730, "h": 16, "availableArea": 128, "weightPerMeterInKG": 7.68},
-    "10/20": {"available_w": 667, "availableITrägheitsmoment": 6670, "h": 20, "availableArea": 200, "weightPerMeterInKG": 12},
-    "12/24": {"available_w": 1150, "availableITrägheitsmoment": 13820, "h": 24, "availableArea": 288, "weightPerMeterInKG": 17.3},
-    "13/18": {"available_w": 702, "availableITrägheitsmoment": 6320, "h": 18, "availableArea": 234, "weightPerMeterInKG": 14},
-    "14/28": {"available_w": 1830, "availableITrägheitsmoment": 25610, "h": 28, "availableArea": 392, "weightPerMeterInKG": 23.4},
-    "16/24": {"available_w": 1536, "availableITrägheitsmoment": 18430, "h": 24, "availableArea": 384, "weightPerMeterInKG": 23},
-    "18/26": {"available_w": 972, "availableITrägheitsmoment": 8750, "h": 26, "availableArea": 468, "weightPerMeterInKG": 28}
-}
-
+# Laden von Daten, @st.cache damit sie nur geladen werden, wenn man sie braucht.
+@st.cache_data
+def get_data(filename):
+    wood_data = pd.read_excel(filename)
+    return wood_data
+if "data_storage_wood" not in st.session_state:
+    st.session_state.data_storage_wood = {}
+    wood_data = get_data('tabellen\Tabelle_Kantholz.xlsx')
+    # Erstellung der Datenbank mit Werten für kanthölzer.
+    for rows in wood_data.iterrows():
+        key = f"{int(rows[1]['b'])}/{int(rows[1]['h'])}"
+        values = {
+            "b": rows[1]['b'],
+            "h": rows[1]['h'],
+            "availableArea": rows[1]['A'],
+            "weightPerMeterInKG": rows[1]['G'],
+            "availableITrägheitsmoment": int(rows[1]['I']),
+            "available_w": rows[1]['W']
+        }
+        st.session_state.data_storage_wood[key] = values
 if "tension_rd_wood" not in st.session_state: 
     st.session_state.tension_rd_wood = 1.5
 if "needed_w" not in st.session_state: 
@@ -451,7 +552,12 @@ if "number_k0" not in st.session_state:
     st.session_state.number_k0 = 312
 if "number_k0" not in st.session_state:
     st.session_state.maximum_moment_check = 0
-def check_profil():
+if "results_variant" not in st.session_state:
+    st.session_state.results_variant = []
+def check_profil(counter_variant, cross_section_wood_input):
+    # Entfernen der zuvor gespeicherten Ergebnisse
+    if len(st.session_state.results_variant) > 0 and len(st.session_state.results_variant) > counter_variant:
+        del st.session_state.results_variant[counter_variant-1]
     weight = 0
     weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
     # kg in kN umwandeln
@@ -465,97 +571,106 @@ def check_profil():
         st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
     # Bei den Momentenbestimmungen auch die Position bestimmen
     st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd_wood
-    #anpassen an die Zahl der Variante, wenn es möglich ist
-    if st.session_state.needed_w != 0:
-        col2.header("Ergebnisübersicht Variante 1")
+    results_variant_title = f'''Variante {counter_variant}'''
     # Zugriff auf Datenbank und Suche nach passendem W.
     if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
-        col2.write("Das gewählte Profil passt nicht.")
-        col2.write("erf W > vorh W")
-        col2.write(f"{st.session_state.needed_w} > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}")
-        # Neue Querschnitt wählen, wenn nötig.
-        # Weitere Rechnungen einfügen oder Vergleich für Gebrauchstauglichkeit oder Schubspannungsnachweis + Überprüfung, ob es einen besseren Querschnitt gibt!!!
+        results_variant = f'''
+        Das gewählte Profil passt nicht.
+        erf W > vorh W
+        {st.session_state.needed_w}cm³ > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+        '''
     else:
-        # Die 1 in den Texten anpassen, wenn mehrere Varianten möglich sind!!!
         if (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] > 15:
             # Gebrauchstauglichkeitsnachweis
             needed_i_traegheitsmoment = st.session_state.number_k0 * (st.session_state.safe_maximum_moment/100) * (length * 100)
             if needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
-                col2.write("Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.")
-                col2.write("erf W < vorh W")
-                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}")
-                col2.write("erf I < vorh I")
-                col2.write(f"{needed_i_traegheitsmoment} < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}")
+                results_variant = f'''
+                Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+                erf I < vorh I
+                {needed_i_traegheitsmoment}cm⁴ < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
+                '''
             else:
-                col2.write("Das Profil der Variante 1 besteht die Prüfung nicht.")
-                col2.write("Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises.") 
-                col2.write("erf W < vorh W")
-                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
-                col2.write("erf I > vorh I")
-                col2.write(f"{needed_i_traegheitsmoment} > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}")         
+                results_variant = f'''
+                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
+                Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises.
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+                erf I > vorh I
+                {needed_i_traegheitsmoment}cm⁴ > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
+                '''         
         elif (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] < 11:
             # Schubnachweis
             print(st.session_state.max_v)
             needed_area = (3 * st.session_state.max_v) / (2 * st.session_state.schub_rd)
             if needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
-                col2.write("Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.")
-                col2.write("erf W < vorh W")
-                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
-                col2.write("erf A < vorh A")
-                col2.write(f"{needed_area} < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}")
+                results_variant = f'''
+                Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+                erf A < vorh A
+                {needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+                '''
             else:
-                col2.write("Das Profil der Variante 1 besteht die Prüfung nicht.")
-                col2.write("Neuen Querschnitt wählen aufgrund des Schubnachweises.") 
-                col2.write("erf W < vorh W")
-                col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
-                col2.write("erf A > vorh A")
-                col2.write(f"{needed_area} > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}")
+                results_variant = f'''
+                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
+                Neuen Querschnitt wählen aufgrund des Schubnachweises. 
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+                erf A > vorh A
+                {needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+                '''
         else:
-            col2.write("Das Profil der Variante 1 besteht die Prüfung.")
-            col2.write("Es ist kein Nachweis der Gebrauchstauglichkeit oder der Spannung notwendig.")
-            col2.write("erf W < vorh W")
-            col2.write(f"{st.session_state.needed_w} < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}") 
+            results_variant = f'''
+            Das Profil der Variante {counter_variant} besteht die Prüfung.
+            Es ist kein Nachweis der Gebrauchstauglichkeit oder der Spannung notwendig.
+            erf W < vorh W
+            {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+            '''
+    # Speichern der Ergebnisse
+    result_variant_array = {"title": results_variant_title, "text": results_variant}
+    # Ersetzen der Ergebnisse
+    st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
 def next_variant():
-    counter = 0  # Initialisieren Sie den Zähler
+    counter_variant = 1
+    while True:
     # Materialauswahl
-    material_choice = st.selectbox("Material", ["Kantholz", "IPE"])
-    st.text("Profil")
-    if material_choice == "Kantholz":
-        cross_section_wood_input = st.text_input("Querschnitt (b/h)", value="8/16")
-        if st.button("Prüfen"):
-            check_profil()
-    elif material_choice == "IPE":
-        cross_section_ipe_input = st.text_input("Querschnitt", placeholder="Platzhalter")
-        if st.button("Prüfen"):
-            check_profil()
-    if st.checkbox("weitere Variante"):
-        next_variant()
-    counter += 1
-
-with st.container():
+        st.text(f"Variante {counter_variant}")
+        material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
+        st.text(f"Profil {counter_variant}")
+        if material_choice == "Kantholz":
+            cross_section_wood_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="8/16")
+            if st.button(f"Prüfen {counter_variant}"):
+                check_profil(counter_variant, cross_section_wood_input)
+        elif material_choice == "IPE":
+            cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", placeholder="Platzhalter")
+            if st.button(f"Prüfen {counter_variant}"):
+                check_profil(counter_variant, cross_section_ipe_input)
+        # Zähler erhöhen
+        counter_variant += 1
+        # Checkbox für die nächste Variante
+        checkbox_label = "weitere Variante ({})".format(counter_variant)
+        if not st.checkbox(checkbox_label, key=f"checkbox_variant{counter_variant}"):
+            break
+# Überprüfung der Querschnitte
+with st.container(border=True):
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Profilauswahl:")
-        st.text("Variante 1")
-        st.text("Mögliche Querschnitte Aktuell: 8/16, 10/20, 12/24, 13/18, 14/28, 16/24, 18/26")
-        # Materialauswahl
-        material_choice = st.selectbox("Material", ["Kantholz", "IPE"])
-        st.text("Profil")
-        if material_choice == "Kantholz":
-            cross_section_wood_input = st.text_input("Querschnitt (b/h)", value="8/16")
-            if st.button("Prüfen"):
-                check_profil()
-        elif material_choice == "IPE":
-            cross_section_ipe_input = st.text_input("Querschnitt", placeholder="Platzhalter")
-            if st.button("Prüfen"):
-                check_profil()
-        if st.checkbox("weitere Variante"):
+        st.header("Profilauswahl")
+        if st.checkbox("Variante 1"):
             next_variant()
-
     with col2:
-        if st.session_state.needed_w == 0:
-            st.header("Ergebnisübersicht")
+        st.header("Ergebnisübersicht")
+        # Ergebnisse der Überprüfung
+        for item in st.session_state.results_variant:
+            st.subheader(item["title"])
+            st.text(item["text"])
 
-with st.container():
-    # Weitere Informationen
-    st.header("Weitere Informationen")
+# Variantenvergleich
+with st.container(border=True):
+    st.subheader("Variante1")
+# Weitere Informationen
+
+with st.expander("Weitere Informationen"):
+    st.write("Hier können mehr ergebnisse stehen.")
