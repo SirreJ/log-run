@@ -573,7 +573,7 @@ def get_data(filename):
     return wood_data
 if "data_storage_wood" not in st.session_state:
     st.session_state.data_storage_wood = {}
-    wood_data = get_data('tabellen\Tabelle_Kantholz.xlsx')
+    wood_data = get_data('tabellen/Tabelle_Kantholz.xlsx')
     # Erstellung der Datenbank mit Werten für kanthölzer.
     for rows in wood_data.iterrows():
         key = f"{int(rows[1]['b'])}/{int(rows[1]['h'])}"
