@@ -734,7 +734,7 @@ with st.container(border=True):
     with col1:
         st.header("Profilauswahl")
         with st.expander("Tabelle Kantholz"):
-            wood_data = get_data('tabellen\Tabelle_Kantholz.xlsx')
+            wood_data = get_data('tabellen/Tabelle_Kantholz.xlsx')
             st.write(wood_data)
         if st.checkbox("Variante 1"):
             next_variant()
