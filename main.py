@@ -484,10 +484,47 @@ def drawing_system():
     plt.axis('off')
     st.pyplot(fig)
 if "more_information_dach" not in st.session_state:
-    st.session_state.more_information_dach = []
+    st.session_state.more_information_dach = {
+        "kein Dachaufbau": 
+        """ 
+        
+        """,
+        "extensive Dachbegrünung": 
+        """ 
+        extensive Dachbegrünung 15cm
+        Abdichtung
+        Dämmstoff 10cm
+        Dampfsperre
+        Trapezblech
+        """,
+        "intensive Dachbegrünung": 
+        """ 
+        intensive Dachbegrünung 20cm
+        Abdichtung
+        Dämmstoff 10cm
+        Dampfsperre
+        Trapezblech
+        """,
+        "leichter Dachaufbau": 
+        """ 
+        Abdichtung
+        Dämmstoff 10cm
+        Dampfsperre
+        Trapezblech
+        """,
+        "schwerer Dachaufbau": 
+        """ 
+        Kies 4cm
+        Abdichtung
+        Dämmstoff 10cm
+        Dampfsperre
+        BSH 8cm
+        """,
+    }
 # Genauer Dachaufbau
 def more_information_dachaufbau():
-    st.session_state.more_information_dach[st.session_state.selected_option]
+    st.text(st.session_state.more_information_dach[st.session_state.selected_option])
+
 st.header("Vordimensionierung Einfeldträger")
 st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet. ")
 # Statisches System
@@ -509,7 +546,8 @@ with st.container(border=True):
             col1, col2 = st.columns(2)
             with col1:
                 dach_aufbau()
-                #more_information_dachaufbau()
+                with st.expander("Daten Dachaufbau"):
+                    more_information_dachaufbau()
             with col2:
                 st.image(st.session_state.image_dachaufbau)
         if st.checkbox("Genaue Lasteingabe"):
