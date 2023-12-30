@@ -483,6 +483,11 @@ def drawing_system():
     plt.ylim(-2,12)
     plt.axis('off')
     st.pyplot(fig)
+if "more_information_dach" not in st.session_state:
+    st.session_state.more_information_dach = []
+# Genauer Dachaufbau
+def more_information_dachaufbau():
+    st.session_state.more_information_dach[st.session_state.selected_option]
 st.header("Vordimensionierung Einfeldträger")
 st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet. ")
 # Statisches System
@@ -504,6 +509,7 @@ with st.container(border=True):
             col1, col2 = st.columns(2)
             with col1:
                 dach_aufbau()
+                #more_information_dachaufbau()
             with col2:
                 st.image(st.session_state.image_dachaufbau)
         if st.checkbox("Genaue Lasteingabe"):
@@ -644,33 +650,49 @@ def check_profil(counter_variant, cross_section_wood_input, material_choice):
             {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
             '''
     # Speichern der Ergebnisse
-    result_variant_array = {"title": results_variant_title, "text": results_variant, "profil": material_choice,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment}
+    result_variant_array = {"title": results_variant_title, "text": results_variant, "profil": material_choice,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe}
     # Ersetzen der Ergebnisse
     st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
+if "image_profil_list" not in st.session_state:
+    st.session_state.image_profil_list = {
+        'Kantholz':'material_profil/Pikto_Kantholz.jpg',
+        'IPE':'material_profil/Pikto_IPE.jpg'
+    }
+if "image_profil_safe" not in st.session_state:
+    st.session_state.image_profil_safe = 0
 def next_variant():
     counter_variant = 1
     while True:
-    # Materialauswahl
-        st.text(f"Variante {counter_variant}")
-        material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
-        st.text(f"Profil {counter_variant}")
-        if material_choice == "Kantholz":
-            cross_section_wood_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="8/16")
-            if st.button(f"Prüfen {counter_variant}"):
-                check_profil(counter_variant, cross_section_wood_input, material_choice)
-        elif material_choice == "IPE":
-            cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", placeholder="Platzhalter")
-            if st.button(f"Prüfen {counter_variant}"):
-                check_profil(counter_variant, cross_section_ipe_input, material_choice)
-        # Zähler erhöhen
-        counter_variant += 1
-        # Checkbox für die nächste Variante
-        checkbox_label = "weitere Variante ({})".format(counter_variant)
-        if not st.checkbox(checkbox_label, key=f"checkbox_variant{counter_variant}"):
-            break
+        # Materialauswahl
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader(f"Variante {counter_variant}")
+                material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
+                st.text(f"Profil {counter_variant}")
+                if material_choice == "Kantholz":    
+                    image_profil_choice = st.session_state.image_profil_list[material_choice]
+                    image_profil = Image.open(image_profil_choice)
+                    col2.image(image_profil)
+                    cross_section_wood_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="8/16")
+                    if st.button(f"Prüfen {counter_variant}"):
+                        check_profil(counter_variant, cross_section_wood_input, material_choice)
+                elif material_choice == "IPE":
+                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", placeholder="Platzhalter")
+                    image_profil_choice = st.session_state.image_profil_list[material_choice]
+                    image_profil = Image.open(image_profil_choice)
+                    col2.image(image_profil)
+                    if st.button(f"Prüfen {counter_variant}"):
+                        check_profil(counter_variant, cross_section_ipe_input, material_choice)
+                st.session_state.image_profil_safe = image_profil
+                # Zähler erhöhen
+                counter_variant += 1
+                # Checkbox für die nächste Variante
+                checkbox_label = "weitere Variante ({})".format(counter_variant)
+                if not st.checkbox(checkbox_label, key=f"checkbox_variant{counter_variant}"):
+                    break
 # Überprüfung der Querschnitte
 with st.container(border=True):
-    col1, col2 = st.columns(2)
+    col1, col3 = st.columns(2)
     with col1:
         st.header("Profilauswahl")
         with st.expander("Tabelle Kantholz"):
@@ -678,7 +700,7 @@ with st.container(border=True):
             st.write(wood_data)
         if st.checkbox("Variante 1"):
             next_variant()
-    with col2:
+    with col3:
         st.header("Ergebnisübersicht")
         # Ergebnisse der Überprüfung
         for item in st.session_state.results_variant:
@@ -689,10 +711,11 @@ def variant_comparison():
             # Dynamisch Spalten erstellen
             num_columns = len(st.session_state.results_variant)
             dynamic_columns = st.columns(num_columns)
-            # Füllen Sie die Spalten mit Daten
+            # Füllen der Spalten mit Daten
             for i, col in enumerate(dynamic_columns):
                 col.subheader(f"Variante {i+1}")
                 col.write(f"Profil: {st.session_state.results_variant[i]['profil']}")
+                col.image(st.session_state.results_variant[i]['image'])
                 col.write(f"Höhe: {st.session_state.results_variant[i]['height']}cm")
                 col.write(f"Breite: {st.session_state.results_variant[i]['width']}cm")
                 col.write(f"Eigengewicht: {st.session_state.results_variant[i]['weight']}kg")
