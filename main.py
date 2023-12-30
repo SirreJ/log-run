@@ -32,7 +32,7 @@ def image_length_grid_place(length, grid):
     text_content2 = (f'{str(grid)}m')
     text_color2 = (0, 0, 0)
     # Beschriftungen auf das Bild zeichnen
-    font = ImageFont.truetype("arial.ttf", 30)
+    font = ImageFont.truetype("OpenSans-Light.ttf", 30)
     draw.text(text_position1, text_content1, font=font, fill=text_color1)
     draw.text(text_position2, text_content2, font=font, fill=text_color2)
     st.image(image_length_grid)
@@ -194,7 +194,7 @@ def do_calculations_system():
         st.session_state.position = 0
         number_of_content_d= 0
         st.session_state.maximum_moment = 0
-        st.session_state.weigh_calculation_option = 1
+        st.session_state.weight_calculation_option = 1
 
         st.session_state.max_v = float(st.session_state.support_forces[0]['support_force'])
 
@@ -391,6 +391,8 @@ def do_calculations_system():
                 * (float(st.session_state.side_and_position_max_momentum[1]) ** 2) / 2
             )
             number_of_content_d += 1
+        if st.session_state.side_and_position_max_momentum[0] == 'right':
+            st.session_state.position = length - st.session_state.position 
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
     st.session_state.safe_maximum_moment = 0
     #Moment vor dem Einfluss des Sicherheitsbeiwerts sichern.
@@ -398,9 +400,6 @@ def do_calculations_system():
         st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
-    st.write(st.session_state.side_and_position_max_momentum[0])
-    if st.session_state.side_and_position_max_momentum[0] == 'right':
-        st.session_state.position = length - st.session_state.position 
 def drawing_system():
     # Systemlinie
     startpoint_a = 0
@@ -471,7 +470,7 @@ def drawing_system():
             plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
     else:
         for arrow in st.session_state.forces_array:
-            force_location_x = startpoint_a + arrow["position"]
+            force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
             x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
             y_value_tip = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array)])
             ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
@@ -549,29 +548,46 @@ if "needed_w" not in st.session_state:
     st.session_state.needed_w = 0
 if "number_k0" not in st.session_state:
     st.session_state.number_k0 = 312
-if "number_k0" not in st.session_state:
+if "maximum_moment_check" not in st.session_state:
     st.session_state.maximum_moment_check = 0
 if "results_variant" not in st.session_state:
     st.session_state.results_variant = []
-def check_profil(counter_variant, cross_section_wood_input):
+if "safe_maximum_moment_check" not in st.session_state:
+    st.session_state.safe_maximum_moment_check = 0
+if "needed_i_traegheitsmoment" not in st.session_state:
+    st.session_state.needed_i_traegheitsmoment=0
+if "needed_area" not in st.session_state:
+    st.session_state.needed_area=0
+def check_profil(counter_variant, cross_section_wood_input, material_choice):
     # Entfernen der zuvor gespeicherten Ergebnisse
     if len(st.session_state.results_variant) > 0 and len(st.session_state.results_variant) > counter_variant:
         del st.session_state.results_variant[counter_variant-1]
     weight = 0
     weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
+    safe_weight = 0
+    safe_weight += weight
     # kg in kN umwandeln
     weight = weight * length / 100
+    st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
     st.session_state.maximum_moment_check = st.session_state.maximum_moment
     if st.session_state.weight_calculation_option == 1:
         st.session_state.maximum_moment_check += weight
+        st.session_state.safe_maximum_moment_check += weight
     elif st.session_state.weight_calculation_option == 2:
         st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
     elif st.session_state.weight_calculation_option == 3:
         st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
     # Bei den Momentenbestimmungen auch die Position bestimmen
+    st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
+    st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
     st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd_wood
     results_variant_title = f'''Variante {counter_variant}'''
     # Zugriff auf Datenbank und Suche nach passendem W.
+    st.session_state.needed_i_traegheitsmoment=0
+    st.session_state.needed_area=0
+    st.session_state.needed_w = round(st.session_state.needed_w, 2)
     if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
         results_variant = f'''
         Das gewählte Profil passt nicht.
@@ -581,14 +597,15 @@ def check_profil(counter_variant, cross_section_wood_input):
     else:
         if (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] > 15:
             # Gebrauchstauglichkeitsnachweis
-            needed_i_traegheitsmoment = st.session_state.number_k0 * (st.session_state.safe_maximum_moment/100) * (length * 100)
-            if needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
+            st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0 * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
+            st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
+            if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
                 results_variant = f'''
                 Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.
                 erf W < vorh W
                 {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
                 erf I < vorh I
-                {needed_i_traegheitsmoment}cm⁴ < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
+                {st.session_state.needed_i_traegheitsmoment}cm⁴ < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
                 '''
             else:
                 results_variant = f'''
@@ -597,19 +614,18 @@ def check_profil(counter_variant, cross_section_wood_input):
                 erf W < vorh W
                 {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
                 erf I > vorh I
-                {needed_i_traegheitsmoment}cm⁴ > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
+                {st.session_state.needed_i_traegheitsmoment}cm⁴ > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
                 '''         
         elif (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] < 11:
-            # Schubnachweis
-            print(st.session_state.max_v)
-            needed_area = (3 * st.session_state.max_v) / (2 * st.session_state.schub_rd)
-            if needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
+            # Schubnachweis mit Sicherheitsbeiwert von 1.4
+            st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd)
+            if st.session_state.needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
                 results_variant = f'''
                 Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.
                 erf W < vorh W
                 {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
                 erf A < vorh A
-                {needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+                {st.session_state.needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
                 '''
             else:
                 results_variant = f'''
@@ -618,7 +634,7 @@ def check_profil(counter_variant, cross_section_wood_input):
                 erf W < vorh W
                 {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
                 erf A > vorh A
-                {needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+                {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
                 '''
         else:
             results_variant = f'''
@@ -628,7 +644,7 @@ def check_profil(counter_variant, cross_section_wood_input):
             {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
             '''
     # Speichern der Ergebnisse
-    result_variant_array = {"title": results_variant_title, "text": results_variant}
+    result_variant_array = {"title": results_variant_title, "text": results_variant, "profil": material_choice,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment}
     # Ersetzen der Ergebnisse
     st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
 def next_variant():
@@ -641,11 +657,11 @@ def next_variant():
         if material_choice == "Kantholz":
             cross_section_wood_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="8/16")
             if st.button(f"Prüfen {counter_variant}"):
-                check_profil(counter_variant, cross_section_wood_input)
+                check_profil(counter_variant, cross_section_wood_input, material_choice)
         elif material_choice == "IPE":
             cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", placeholder="Platzhalter")
             if st.button(f"Prüfen {counter_variant}"):
-                check_profil(counter_variant, cross_section_ipe_input)
+                check_profil(counter_variant, cross_section_ipe_input, material_choice)
         # Zähler erhöhen
         counter_variant += 1
         # Checkbox für die nächste Variante
@@ -657,6 +673,9 @@ with st.container(border=True):
     col1, col2 = st.columns(2)
     with col1:
         st.header("Profilauswahl")
+        with st.expander("Tabelle Kantholz"):
+            wood_data = get_data('tabellen\Tabelle_Kantholz.xlsx')
+            st.write(wood_data)
         if st.checkbox("Variante 1"):
             next_variant()
     with col2:
@@ -665,11 +684,22 @@ with st.container(border=True):
         for item in st.session_state.results_variant:
             st.subheader(item["title"])
             st.text(item["text"])
-
+def variant_comparison():
+        if len(st.session_state.results_variant) != 0:
+            # Dynamisch Spalten erstellen
+            num_columns = len(st.session_state.results_variant)
+            dynamic_columns = st.columns(num_columns)
+            # Füllen Sie die Spalten mit Daten
+            for i, col in enumerate(dynamic_columns):
+                col.subheader(f"Variante {i+1}")
+                col.write(f"Profil: {st.session_state.results_variant[i]['profil']}")
+                col.write(f"Höhe: {st.session_state.results_variant[i]['height']}cm")
+                col.write(f"Breite: {st.session_state.results_variant[i]['width']}cm")
+                col.write(f"Eigengewicht: {st.session_state.results_variant[i]['weight']}kg")
+                col.write(f"max Moment mit Eigengewicht: {st.session_state.results_variant[i]['max_moment']}kNm")
+                col.write(f"erf A: {st.session_state.results_variant[i]['erf_a']}cm²")
+                col.write(f"erf W: {st.session_state.results_variant[i]['erf_w']}cm³")
+                col.write(f"erf I: {st.session_state.results_variant[i]['erf_i']}cm⁴")     
 # Variantenvergleich
-with st.container(border=True):
-    st.subheader("Variante1")
-# Weitere Informationen
-
 with st.expander("Weitere Informationen"):
-    st.write("Hier können mehr ergebnisse stehen.")
+    variant_comparison()
