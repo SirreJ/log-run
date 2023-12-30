@@ -19,8 +19,7 @@ if "selected_option_value" not in st.session_state:
     st.session_state.selected_option_value=0
 # Bild Laden
 if "image_length_grid" not in st.session_state:
-    image_path_length_grid = 'dachaufbau\Spannweite_Lasteinzugsbreite.jpg'
-    image_length_grid = Image.open(image_path_length_grid)
+    image_length_grid = Image.open('dachaufbau\Spannweite_Lasteinzugsbreite.jpg')
 def image_length_grid_place(length, grid):       
     # interaktive Beschriftung des Bilds
     draw = ImageDraw.Draw(image_length_grid)
