@@ -567,7 +567,7 @@ with st.container(border=True):
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
 # Laden von Daten, @st.cache damit sie nur geladen werden, wenn man sie braucht.
-@st.cache_data
+
 def get_data(filename):
     wood_data = pd.read_excel(filename)
     return wood_data
