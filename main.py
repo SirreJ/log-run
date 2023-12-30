@@ -19,7 +19,7 @@ if "selected_option_value" not in st.session_state:
     st.session_state.selected_option_value=0
 # Bild Laden
 if "image_length_grid" not in st.session_state:
-    image_length_grid = Image.open('dachaufbau\Spannweite_Lasteinzugsbreite.jpg')
+    image_length_grid = Image.open('dachaufbau/Spannweite_Lasteinzugsbreite.jpg')
 def image_length_grid_place(length, grid):       
     # interaktive Beschriftung des Bilds
     draw = ImageDraw.Draw(image_length_grid)
@@ -49,11 +49,11 @@ def dach_aufbau():
     }
     # Bilder Liste
     image_dachaufbau_list = {
-        'extensive Dachbegrünung':'dachaufbau\Pikto_Dachaufbau_extensiv.jpg',
-        'intensive Dachbegrünung':'dachaufbau\Pikto_Dachaufbau_intensiv.jpg',
-        'leichter Dachaufbau':'dachaufbau\Pikto_Dachaufbau_leicht.jpg',
-        'schwerer Dachaufbau':'dachaufbau\Pikto_Dachaufbau_schwer.jpg',
-        'kein Dachaufbau':'dachaufbau\Pikto_kein_Dachaufbau.jpg'
+        'extensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_extensiv.jpg',
+        'intensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_intensiv.jpg',
+        'leichter Dachaufbau':'dachaufbau/Pikto_Dachaufbau_leicht.jpg',
+        'schwerer Dachaufbau':'dachaufbau/Pikto_Dachaufbau_schwer.jpg',
+        'kein Dachaufbau':'dachaufbau/Pikto_kein_Dachaufbau.jpg'
     }
     # st.selectbox für die Auswahl des Dachaufbaus
     st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()))
