@@ -567,15 +567,11 @@ with st.container(border=True):
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
 # Laden von Daten, @st.cache damit sie nur geladen werden, wenn man sie braucht.
-
-def get_data(filename):
-    wood_data = pd.read_excel(filename)
-    return wood_data
+if "wood_data" not in st.session_state:
+    st.session_state.wood_data = pd.read_excel('tabellen/Tabelle_Kantholz.xlsx')
 if "data_storage_wood" not in st.session_state:
-    st.session_state.data_storage_wood = {}
-    wood_data = get_data('tabellen/Tabelle_Kantholz.xlsx')
     # Erstellung der Datenbank mit Werten für kanthölzer.
-    for rows in wood_data.iterrows():
+    for rows in st.session_state.wood_data.iterrows():
         key = f"{int(rows[1]['b'])}/{int(rows[1]['h'])}"
         values = {
             "b": rows[1]['b'],
@@ -734,7 +730,7 @@ with st.container(border=True):
     with col1:
         st.header("Profilauswahl")
         with st.expander("Tabelle Kantholz"):
-            st.write(wood_data)
+            st.write(st.session_state.wood_data)
         if st.checkbox("Variante 1"):
             next_variant()
     with col3:
