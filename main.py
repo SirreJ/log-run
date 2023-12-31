@@ -570,6 +570,7 @@ with st.container(border=True):
 if "wood_data" not in st.session_state:
     st.session_state.wood_data = pd.read_excel('tabellen/Tabelle_Kantholz.xlsx')
 if "data_storage_wood" not in st.session_state:
+    st.session_state.data_storage_wood = {}
     # Erstellung der Datenbank mit Werten für kanthölzer.
     for rows in st.session_state.wood_data.iterrows():
         key = f"{int(rows[1]['b'])}/{int(rows[1]['h'])}"
@@ -582,12 +583,39 @@ if "data_storage_wood" not in st.session_state:
             "available_w": rows[1]['W']
         }
         st.session_state.data_storage_wood[key] = values
-if "tension_rd_wood" not in st.session_state: 
-    st.session_state.tension_rd_wood = 1.5
+if "ipe_data" not in st.session_state:
+    st.session_state.ipe_data = pd.read_excel('tabellen/Tabelle_IPE.xlsx')
+if "data_storage_ipe" not in st.session_state:
+    st.session_state.data_storage_ipe = {}
+    # Erstellung der Datenbank mit Werten für kanthölzer.
+    for rows in st.session_state.ipe_data.iterrows():
+        key = f"{rows[1]['b']}/{rows[1]['h']}"
+        values = {
+            "b": rows[1]['b'],
+            "h": rows[1]['h'],
+            "availableArea": rows[1]['A'],
+            "weightPerMeterInKG": rows[1]['G'],
+            "availableITrägheitsmoment": int(rows[1]['I']),
+            "available_w": rows[1]['W']
+        }
+        st.session_state.data_storage_ipe[key] = values
+if "tension_rd" not in st.session_state: 
+    st.session_state.tension_rd = {
+        "IPE": 21.8,
+        "Kantholz": 1.5
+    }
 if "needed_w" not in st.session_state: 
     st.session_state.needed_w = 0
 if "number_k0" not in st.session_state:
-    st.session_state.number_k0 = 312
+    st.session_state.number_k0 = {
+        "IPE": 15,
+        "Kantholz": 312
+    }
+if "number_k0" not in st.session_state:
+    st.session_state.schub_rd = {
+        "IPE": 12.6,
+        "Kantholz": 0.12
+    }
 if "maximum_moment_check" not in st.session_state:
     st.session_state.maximum_moment_check = 0
 if "results_variant" not in st.session_state:
@@ -598,7 +626,7 @@ if "needed_i_traegheitsmoment" not in st.session_state:
     st.session_state.needed_i_traegheitsmoment=0
 if "needed_area" not in st.session_state:
     st.session_state.needed_area=0
-def check_profil(counter_variant, cross_section_wood_input, material_choice):
+def check_profil_wood(counter_variant, cross_section_wood_input, material_choice):
     # Entfernen der zuvor gespeicherten Ergebnisse
     if len(st.session_state.results_variant) > 0 and len(st.session_state.results_variant) > counter_variant:
         del st.session_state.results_variant[counter_variant-1]
@@ -622,7 +650,7 @@ def check_profil(counter_variant, cross_section_wood_input, material_choice):
     # Bei den Momentenbestimmungen auch die Position bestimmen
     st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
     st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
-    st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd_wood
+    st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd[material_choice]
     results_variant_title = f'''Variante {counter_variant}'''
     # Zugriff auf Datenbank und Suche nach passendem W.
     st.session_state.needed_i_traegheitsmoment=0
@@ -637,7 +665,7 @@ def check_profil(counter_variant, cross_section_wood_input, material_choice):
     else:
         if (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] > 15:
             # Gebrauchstauglichkeitsnachweis
-            st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0 * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
+            st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
             st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
             if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
                 results_variant = f'''
@@ -658,7 +686,7 @@ def check_profil(counter_variant, cross_section_wood_input, material_choice):
                 '''         
         elif (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] < 11:
             # Schubnachweis mit Sicherheitsbeiwert von 1.4
-            st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd)
+            st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd[material_choice])
             if st.session_state.needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
                 results_variant = f'''
                 Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.
@@ -694,6 +722,95 @@ if "image_profil_list" not in st.session_state:
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
+def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
+     # Entfernen der zuvor gespeicherten Ergebnisse
+    if len(st.session_state.results_variant) > 0 and len(st.session_state.results_variant) > counter_variant:
+        del st.session_state.results_variant[counter_variant-1]
+    weight = 0
+    weight = float(st.session_state.data_storage_ipe[cross_section_ipe_input]["weightPerMeterInKG"])
+    safe_weight = 0
+    safe_weight += weight
+    # kg in kN umwandeln
+    weight = weight * length / 100
+    st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
+    st.session_state.maximum_moment_check = st.session_state.maximum_moment
+    if st.session_state.weight_calculation_option == 1:
+        st.session_state.maximum_moment_check += weight
+        st.session_state.safe_maximum_moment_check += weight
+    elif st.session_state.weight_calculation_option == 2:
+        st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
+    elif st.session_state.weight_calculation_option == 3:
+        st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
+    # Bei den Momentenbestimmungen auch die Position bestimmen
+    st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
+    st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
+    st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd[material_choice]
+    results_variant_title = f'''Variante {counter_variant}'''
+    # Zugriff auf Datenbank und Suche nach passendem W.
+    st.session_state.needed_i_traegheitsmoment=0
+    st.session_state.needed_area=0
+    st.session_state.needed_w = round(st.session_state.needed_w, 2)
+    if st.session_state.needed_w > st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]:
+        results_variant = f'''
+        Das gewählte Profil passt nicht.
+        erf W > vorh W
+        {st.session_state.needed_w}cm³ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+        '''
+    else:
+        if (length * 100) / st.session_state.data_storage_ipe[cross_section_ipe_input]["h"] > 22:
+            # Gebrauchstauglichkeitsnachweis
+            st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
+            st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
+            if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
+                results_variant = f'''
+                Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+                erf I < vorh I
+                {st.session_state.needed_i_traegheitsmoment}cm⁴ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm⁴
+                '''
+            else:
+                results_variant = f'''
+                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
+                Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises.
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+                erf I > vorh I
+                {st.session_state.needed_i_traegheitsmoment}cm⁴ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm⁴
+                '''         
+        elif (length * 100) / st.session_state.data_storage_ipe[cross_section_ipe_input]["h"] < 6:
+            # Schubnachweis mit Sicherheitsbeiwert von 1.4
+            st.session_state.needed_area = (st.session_state.max_v * 1.4) / st.session_state.schub_rd[material_choice]
+            if st.session_state.needed_area <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableArea"]:
+                results_variant = f'''
+                Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+                erf A < vorh A
+                {st.session_state.needed_area}cm² < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableArea']}cm²
+                '''
+            else:
+                results_variant = f'''
+                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
+                Neuen Querschnitt wählen aufgrund des Schubnachweises. 
+                erf W < vorh W
+                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+                erf A > vorh A
+                {st.session_state.needed_area}cm² > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableArea']}cm²
+                '''
+        else:
+            results_variant = f'''
+            Das Profil der Variante {counter_variant} besteht die Prüfung.
+            Es ist kein Nachweis der Gebrauchstauglichkeit oder der Spannung notwendig.
+            erf W < vorh W
+            {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+            '''
+    # Speichern der Ergebnisse
+    result_variant_array = {"title": results_variant_title, "text": results_variant, "profil": material_choice,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_ipe[cross_section_ipe_input]["h"], "width":st.session_state.data_storage_ipe[cross_section_ipe_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe}
+    # Ersetzen der Ergebnisse
+    st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
 def next_variant():
     counter_variant = 1
     while True:
@@ -706,18 +823,19 @@ def next_variant():
                 if material_choice == "Kantholz":    
                     image_profil_choice = st.session_state.image_profil_list[material_choice]
                     image_profil = Image.open(image_profil_choice)
+                    st.session_state.image_profil_safe = image_profil
                     col2.image(image_profil)
                     cross_section_wood_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="8/16")
                     if st.button(f"Prüfen {counter_variant}"):
-                        check_profil(counter_variant, cross_section_wood_input, material_choice)
+                        check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
                 elif material_choice == "IPE":
-                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", placeholder="Platzhalter")
+                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", value="10.0/20.0")
                     image_profil_choice = st.session_state.image_profil_list[material_choice]
                     image_profil = Image.open(image_profil_choice)
+                    st.session_state.image_profil_safe = image_profil
                     col2.image(image_profil)
                     if st.button(f"Prüfen {counter_variant}"):
-                        check_profil(counter_variant, cross_section_ipe_input, material_choice)
-                st.session_state.image_profil_safe = image_profil
+                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice)
                 # Zähler erhöhen
                 counter_variant += 1
                 # Checkbox für die nächste Variante
@@ -731,6 +849,9 @@ with st.container(border=True):
         st.header("Profilauswahl")
         with st.expander("Tabelle Kantholz"):
             st.write(st.session_state.wood_data)
+        with st.expander("Tabelle IPE"):
+            st.write(st.session_state.ipe_data)
+        st.write(st.session_state.data_storage_ipe)
         if st.checkbox("Variante 1"):
             next_variant()
     with col3:
