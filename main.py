@@ -851,7 +851,6 @@ with st.container(border=True):
             st.write(st.session_state.wood_data)
         with st.expander("Tabelle IPE"):
             st.write(st.session_state.ipe_data)
-        st.write(st.session_state.data_storage_ipe)
         if st.checkbox("Variante 1"):
             next_variant()
     with col3:
