@@ -56,7 +56,7 @@ def dach_aufbau():
         'kein Dachaufbau':'dachaufbau/Pikto_kein_Dachaufbau.jpg'
     }
     # st.selectbox für die Auswahl des Dachaufbaus
-    st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()))
+    st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()), help="Der Dachaufbau wird erst beim Klicken auf den Berechnungs Knopf in das statische System hinzugefügt.")
     st.session_state.selected_option_value = option_values[st.session_state.selected_option]
     # Passendes Bild Laden
     image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
@@ -107,7 +107,7 @@ def last_auswahl():
         elif load_type == "Punktlast":
             # st.text_input für die Punktlast und Position mit eindeutigen Schlüsseln
             point_load_input = st.text_input("Punktlast (kN)", key=f"point_load_{counter}")
-            position_input = st.text_input("Position (m)", key=f"position_{counter}")
+            position_input = st.text_input("Position (m)", key=f"position_{counter}", help="Die Position ist die Entfernung der Punktlast von Auflager A.")
             point_load = float(point_load_input) if point_load_input else 0
             position = float(position_input) if position_input else 0
             if st.button(f"Einfügen {counter}"):
@@ -536,9 +536,9 @@ with st.container(border=True):
         with st.container():
             col1, col2 = st.columns(2)
             with col1:
-                length_input = st.text_input ("Spannweite (m)", 5)
+                length_input = st.text_input ("Spannweite (m)", 5, help="Die Spannweite bestimmt die Länge des Trägers.")
                 length = float(length_input)
-                grid_input = st.text_input("Lasteinzugsbreite (m)", 3)
+                grid_input = st.text_input("Lasteinzugsbreite (m)", 3, help="Die Lasteinzugsbreite wird benötigt um die Last des Dachaufbaus auf den Träger zu bestimmen.")
                 grid = float(grid_input)
             with col2:
                 image_length_grid_place(length, grid)
@@ -829,7 +829,7 @@ def next_variant():
                     if st.button(f"Prüfen {counter_variant}"):
                         check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
                 elif material_choice == "IPE":
-                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", value="10.0/20.0")
+                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", value="10.0/20.0", help="Das IPE Profil muss mit einer Nachkommastelle eingegeben werden.")
                     image_profil_choice = st.session_state.image_profil_list[material_choice]
                     image_profil = Image.open(image_profil_choice)
                     st.session_state.image_profil_safe = image_profil
