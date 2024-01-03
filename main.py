@@ -63,7 +63,7 @@ def more_information_snow():
     new_snow=[st.session_state.snow_load, st.session_state.wind_load]
     st.session_state.snow_and_wind.append(new_snow)
     if np.isnan (st.session_state.snow_and_wind[0][0]):
-        st.error("Bitte gib eine gültige Zahl ein.")
+        st.error("Bitte gib eine gültige Zone ein.")
         return
 if "wind_data" not in st.session_state:
     st.session_state.wind_data = pd.read_excel('tabellen/Tabelle_Windlast.xlsx')
@@ -102,7 +102,7 @@ def more_information_wind():
     new_wind=[st.session_state.snow_load, st.session_state.wind_load]
     st.session_state.snow_and_wind.append(new_wind)
     if np.isnan (st.session_state.snow_and_wind[0][1]):
-        st.error("Bitte gib eine gültige Zahl ein.")
+        st.error("Bitte gib eine gültige Gebäudehöhe ein.")
         return
 if "distributed_load_array" not in st.session_state:
     st.session_state.distributed_load_array = []
