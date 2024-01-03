@@ -8,11 +8,107 @@ from PIL import Image, ImageDraw, ImageFont
 
 st.set_page_config(page_title="Profilberechnung Einfeldträger", page_icon=None, layout='wide')
 
-# Auswahlmöglichkeiten für den Dachaufbau
+
+# Schnee- und Windlast
+if "wind_load" not in st.session_state:
+    st.session_state.wind_load = 0
+if "snow_load" not in st.session_state:
+    st.session_state.snow_load = 0
+if "snow_and_wind" not in st.session_state:
+        st.session_state.snow_and_wind = [st.session_state.wind_load,st.session_state.snow_load]
+if "snow_data" not in st.session_state:
+    st.session_state.snow_data = pd.read_excel('tabellen/Tebelle_Schneelast.xlsx')
+if "data_storage_snow" not in st.session_state:
+    st.session_state.data_storage_snow = {}
+    # Erstellung der Datenbank mit Werten für kanthölzer.
+    for rows in st.session_state.snow_data.iterrows():
+        key = f"{rows[1]['Höhe NN']}"
+        values = {
+            "1": rows[1]['1'],
+            "1a": rows[1]['1a'],
+            "2": rows[1]['2'],
+            "2a": rows[1]['2a'],
+            "3": rows[1]['3']
+        }
+        st.session_state.data_storage_snow[key] = values
+def more_information_snow():
+    option_height = {
+        "=< 200 m",
+        "300 m",
+        "400 m",
+        "500 m",
+        "600 m",
+        "700 m",
+        "800 m",
+        "900 m",
+        "1000 m",
+        "1100 m",
+        "1200 m",
+        "1300 m",
+        "1400 m",
+        "1500 m"
+    }
+    option_zone = {
+        "1",
+        "1a",
+        "2",
+        "2a",
+        "3"
+    }
+    st.session_state.snow_and_wind.clear()
+    st.session_state.selected_option_snow_height = st.selectbox("Geländehöhe von NN", list(option_height))
+    st.session_state.selected_option_snow_zone = st.selectbox("Zonenauswahl", list(option_zone))
+    st.session_state.snow_load = st.session_state.data_storage_snow[st.session_state.selected_option_snow_height][st.session_state.selected_option_snow_zone]*0.8
+    st.session_state.snow_load = round(st.session_state.snow_load, 2)
+    new_snow=[st.session_state.snow_load, st.session_state.wind_load]
+    st.session_state.snow_and_wind.append(new_snow)
+    if np.isnan (st.session_state.snow_and_wind[0][0]):
+        st.error("Bitte gib eine gültige Zahl ein.")
+        return
+if "wind_data" not in st.session_state:
+    st.session_state.wind_data = pd.read_excel('tabellen/Tabelle_Windlast.xlsx')
+if "data_storage_wind" not in st.session_state:
+    st.session_state.data_storage_wind = {}
+    # Erstellung der Datenbank mit Werten für kanthölzer.
+    for rows in st.session_state.wind_data.iterrows():
+        key = f"{rows[1]['Ort']}"
+        values = {
+            "< 10m": rows[1]['< 10m'],
+            "10 m <h< 18m": rows[1]['10 m <h< 18m'],
+            "18 m < h < 25 m": rows[1]['18 m < h < 25 m']
+        }
+        st.session_state.data_storage_wind[key] = values
+def more_information_wind():
+    option_place = {
+        "1 Binnenland",
+        "2 Binnenland",
+        "2 Küste und Inseln der Ostsee",
+        "3 Binnenland",
+        "3 Küste und Inseln der Ostsee",
+        "4 Binnenland",
+        "4 Küste der Nord- und Ostsee und Inseln der Ostsee",
+        "4 Inseln der Nordsee"
+    }
+    option_building_height = {
+        "< 10m",
+        "10 m <h< 18m",
+        "18 m < h < 25 m"
+    }
+    st.session_state.snow_and_wind.clear()
+    st.session_state.selected_option_place = st.selectbox("Windzone und Standort", list(option_place))
+    st.session_state.selected_option_building_height = st.selectbox("Gebäudehöhe", list(option_building_height))
+    st.session_state.wind_load = st.session_state.data_storage_wind[st.session_state.selected_option_place][st.session_state.selected_option_building_height]*0.7
+    st.session_state.wind_load = round(st.session_state.wind_load, 2)
+    new_wind=[st.session_state.snow_load, st.session_state.wind_load]
+    st.session_state.snow_and_wind.append(new_wind)
+    if np.isnan (st.session_state.snow_and_wind[0][1]):
+        st.error("Bitte gib eine gültige Zahl ein.")
+        return
 if "distributed_load_array" not in st.session_state:
     st.session_state.distributed_load_array = []
 if "counter_distributed_load" not in st.session_state:
     st.session_state.counter_distributed_load = 0
+# Auswahlmöglichkeiten für den Dachaufbau
 if "selected_option" not in st.session_state:
     st.session_state.selected_option = 0
 if "selected_option_value" not in st.session_state:
@@ -40,10 +136,10 @@ if "image_dachaufbau" not in st.session_state:
     st.session_state.image_dachaufbau = 0
 def dach_aufbau():
     # Dictionary mit den Werten für jede Dachaufbauoption
-    extensive_dachbegrünung = st.session_state.snow_and_wind["Schnee"] + st.session_state.snow_and_wind["Wind"] + st.session_state.layer_load_roof['extensive Dachbegrünung 10cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
-    intensive_dachbegrünung = st.session_state.snow_and_wind["Schnee"] + st.session_state.snow_and_wind["Wind"] + st.session_state.layer_load_roof['intensive Dachbegrünung 20cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
-    leichter_dachaufbau = st.session_state.snow_and_wind["Schnee"] + st.session_state.snow_and_wind["Wind"] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
-    schwerer_dachaufbau = st.session_state.snow_and_wind["Schnee"] + st.session_state.snow_and_wind["Wind"] + st.session_state.layer_load_roof['Kies 5cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['BSH 4cm']
+    extensive_dachbegrünung = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['extensive Dachbegrünung 10cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
+    intensive_dachbegrünung = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['intensive Dachbegrünung 20cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
+    leichter_dachaufbau = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
+    schwerer_dachaufbau = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['Kies 5cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['BSH 4cm']
     extensive_dachbegrünung = round(extensive_dachbegrünung, 2)
     intensive_dachbegrünung = round(intensive_dachbegrünung, 2)
     leichter_dachaufbau = round(leichter_dachaufbau, 2)
@@ -127,7 +223,6 @@ def last_auswahl():
         # Eindeutiger Schlüssel für die Checkbox
         if not st.checkbox(checkbox_label, key=f"checkbox_{counter}"):
             break
-# initialisierung von Werten, die während einer sitzung gespeichert werden sollen.
 if "support_forces" not in st.session_state:
     st.session_state.support_forces = [{"side":"left", "support_force":0},{"side":"right", "support_force":0}]
 if "maximum_moment" not in st.session_state:
@@ -148,6 +243,7 @@ if "safety_factor" not in st.session_state:
     st.session_state.safety_factor = 1.4
 if "safe_counter_distributed_load" not in st.session_state:
     st.session_state.safe_counter_distributed_load = None
+# Berechnung des statischen Systems
 def do_calculations_system():
     # Wert des ausgewählten Dachaufbaus
     if st.session_state.safe_counter_distributed_load is not None:
@@ -408,6 +504,7 @@ def do_calculations_system():
         st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
+# Zeichnung des statischen Systems
 def drawing_system():
     # Systemlinie
     startpoint_a = 0
@@ -502,134 +599,9 @@ if "layer_load_roof" not in st.session_state:
         "Dämmstoff 20cm": 0.8,
         "Trapezblech": 0.125
     }
-if "wind_load" not in st.session_state:
-    st.session_state.wind_load = 0
-if "snow_data" not in st.session_state:
-    st.session_state.snow_load = 0
-if "snow_and_wind" not in st.session_state:
-        st.session_state.snow_and_wind =  {
-        "Schnee":st.session_state.snow_load,
-        "Wind":st.session_state.wind_load*0.7
-        }
-if "more_information_roof" not in st.session_state:
-    st.session_state.more_information_roof = {
-        "kein Dachaufbau": 
-        """ 
-        
-        """,
-        "extensive Dachbegrünung": 
-        f""" 
-        extensive Dachbegrünung 10cm = {st.session_state.layer_load_roof['extensive Dachbegrünung 10cm']}kN/m²
-        zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-        Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-        Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-        Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
-        """,
-        "intensive Dachbegrünung": 
-        f""" 
-        intensive Dachbegrünung 20cm = {st.session_state.layer_load_roof['intensive Dachbegrünung 20cm']}kN/m²
-        zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-        Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-        Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-        Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
-        """,
-        "leichter Dachaufbau": 
-        f""" 
-        zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-        Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-        Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-        Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
-        """,
-        "schwerer Dachaufbau": 
-        f""" 
-        Kies 5cm = {st.session_state.layer_load_roof['Kies 5cm']}kN/m²
-        zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-        Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-        Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-        BSH 4cm = {st.session_state.layer_load_roof['BSH 4cm']}kN/m²
-        """,
-    }
-# Genauer Dachaufbau
-def more_information_dachaufbau():
-    st.text(st.session_state.more_information_roof[st.session_state.selected_option])
-if "snow_data" not in st.session_state:
-    st.session_state.snow_data = pd.read_excel('tabellen/Tebelle_Schneelast.xlsx')
-if "data_storage_snow" not in st.session_state:
-    st.session_state.data_storage_snow = {}
-    # Erstellung der Datenbank mit Werten für kanthölzer.
-    for rows in st.session_state.snow_data.iterrows():
-        key = f"{rows[1]['Höhe NN']}"
-        values = {
-            "1": rows[1]['1'],
-            "1a": rows[1]['1a'],
-            "2": rows[1]['2'],
-            "2a": rows[1]['2a'],
-            "3": rows[1]['3']
-        }
-        st.session_state.data_storage_snow[key] = values
-def more_information_snow():
-    option_height = {
-        "=< 200 m",
-        "300 m",
-        "400 m",
-        "500 m",
-        "600 m",
-        "700 m",
-        "800 m",
-        "900 m",
-        "1000 m",
-        "1100 m",
-        "1200 m",
-        "1300 m",
-        "1400 m",
-        "1500 m"
-    }
-    option_zone = {
-        "1",
-        "1a",
-        "2",
-        "2a",
-        "3"
-    }
-    st.session_state.selected_option_snow_height = st.selectbox("Geländehöhe von NN", list(option_height), index=9)
-    st.session_state.selected_option_snow_zone = st.selectbox("Zonenauswahl", list(option_zone), index=2)
-    st.session_state.snow_load = st.session_state.data_storage_snow[st.session_state.selected_option_snow_height][st.session_state.selected_option_snow_zone]*0.8
-    st.write(st.session_state.snow_load)
-if "wind_data" not in st.session_state:
-    st.session_state.wind_data = pd.read_excel('tabellen/Tabelle_Windlast.xlsx')
-if "data_storage_wind" not in st.session_state:
-    st.session_state.data_storage_wind = {}
-    # Erstellung der Datenbank mit Werten für kanthölzer.
-    for rows in st.session_state.wind_data.iterrows():
-        key = f"{rows[1]['Ort']}"
-        values = {
-            "< 10m": rows[1]['< 10m'],
-            "10 m <h< 18m": rows[1]['10 m <h< 18m'],
-            "18 m < h < 25 m": rows[1]['18 m < h < 25 m']
-        }
-        st.session_state.data_storage_wind[key] = values
-def more_information_wind():
-    option_place = {
-        "1 Binnenland",
-        "2 Binnenland",
-        "2 Küste und Inseln der Ostsee",
-        "3 Binnenland",
-        "3 Küste und Inseln der Ostsee",
-        "4 Binnenland",
-        "4 Küste der Nord- und Ostsee und Inseln der Ostsee",
-        "4 Inseln der Nordsee"
-    }
-    option_building_height = {
-        "< 10m",
-        "10 m <h< 18m",
-        "18 m < h < 25 m"
-    }
-    st.session_state.selected_option_place = st.selectbox("Windzone und Standort", list(option_place), index=0)
-    st.session_state.selected_option_building_height = st.selectbox("Gebäudehöhe", list(option_building_height), index=2)
-    st.session_state.wind_load = st.session_state.data_storage_wind[st.session_state.selected_option_place][st.session_state.selected_option_building_height]
-    st.write(st.session_state.wind_load)
+# Beginn der Benutzeroberfläche
 st.header("Vordimensionierung Einfeldträger")
-st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Die Schnee- und Windlasten sind ohne genauerer Auswahl auf ein Gebäude in Aachen unter 10m Höhe eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
+st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
 # Statisches System
 with st.container(border=True):
     col1, col3 = st.columns(2)
@@ -661,7 +633,54 @@ with st.container(border=True):
             with col1:
                 dach_aufbau()
                 with st.expander("Daten Dachaufbau"):
-                    more_information_dachaufbau()
+                    # Genauer Dachaufbau
+                    if "more_information_roof" not in st.session_state:
+                        st.session_state.more_information_roof = {
+                            "kein Dachaufbau": 
+                            """ 
+                            
+                            """,
+                            "extensive Dachbegrünung": 
+                            f""" 
+                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
+                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
+                            extensive Dachbegrünung 10cm = {st.session_state.layer_load_roof['extensive Dachbegrünung 10cm']}kN/m²
+                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                            Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²        
+                            """,
+                            "intensive Dachbegrünung": 
+                            f""" 
+                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
+                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
+                            intensive Dachbegrünung 20cm = {st.session_state.layer_load_roof['intensive Dachbegrünung 20cm']}kN/m²
+                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                            Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
+                            """,
+                            "leichter Dachaufbau": 
+                            f""" 
+                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
+                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
+                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                            Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
+                            """,
+                            "schwerer Dachaufbau": 
+                            f""" 
+                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
+                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
+                            Kies 5cm = {st.session_state.layer_load_roof['Kies 5cm']}kN/m²
+                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                            BSH 4cm = {st.session_state.layer_load_roof['BSH 4cm']}kN/m²
+                            """,
+                        }
+                    st.text(st.session_state.more_information_roof[st.session_state.selected_option])
             with col2:
                 st.image(st.session_state.image_dachaufbau)
         if st.checkbox("Genaue Lasteingabe"):
