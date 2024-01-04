@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
+from fpdf import FPDF
+import base64
 
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
 
@@ -970,7 +972,7 @@ def next_variant():
                     if st.button(f"Prüfen {counter_variant}"):
                         check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
                 elif material_choice == "IPE":
-                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant}", value="10.0/20.0", help="Das IPE Profil muss mit einer Nachkommastelle eingegeben werden.")
+                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="10.0/20.0", help="Das IPE Profil muss mit einer Nachkommastelle eingegeben werden.")
                     image_profil_choice = st.session_state.image_profil_list[material_choice]
                     image_profil = Image.open(image_profil_choice)
                     st.session_state.image_profil_safe = image_profil
@@ -1020,3 +1022,23 @@ def variant_comparison():
 # Variantenvergleich
 with st.expander("Weitere Informationen"):
     variant_comparison()
+
+report_text = "Hallo"
+text_2 = "text rechts daneben"
+
+export_as_pdf = st.button("PDF erstellen")
+
+def create_download_link(val, filename):
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Dimensionierung Einfeldträger</a>'
+
+if export_as_pdf:
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(20, 10, report_text)
+    pdf.cell(20, 10, text_2)
+    
+    html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
+
+    st.markdown(html, unsafe_allow_html=True)
