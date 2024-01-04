@@ -34,7 +34,7 @@ if "data_storage_snow" not in st.session_state:
         }
         st.session_state.data_storage_snow[key] = values
 def more_information_snow():
-    option_height = {
+    option_height = [
         "=< 200 m",
         "300 m",
         "400 m",
@@ -49,17 +49,17 @@ def more_information_snow():
         "1300 m",
         "1400 m",
         "1500 m"
-    }
-    option_zone = {
+    ]
+    option_zone = [
         "1",
         "1a",
         "2",
         "2a",
         "3"
-    }
+    ]
     st.session_state.snow_and_wind.clear()
-    st.session_state.selected_option_snow_height = st.selectbox("Geländehöhe von NN", list(option_height))
-    st.session_state.selected_option_snow_zone = st.selectbox("Zonenauswahl", list(option_zone))
+    st.session_state.selected_option_snow_height = st.selectbox("Geländehöhe von NN", list(option_height), index=0)
+    st.session_state.selected_option_snow_zone = st.selectbox("Zonenauswahl", list(option_zone), index=2)
     st.session_state.snow_load = st.session_state.data_storage_snow[st.session_state.selected_option_snow_height][st.session_state.selected_option_snow_zone]*0.8
     st.session_state.snow_load = round(st.session_state.snow_load, 2)
     new_snow=[st.session_state.snow_load, st.session_state.wind_load]
@@ -81,7 +81,7 @@ if "data_storage_wind" not in st.session_state:
         }
         st.session_state.data_storage_wind[key] = values
 def more_information_wind():
-    option_place = {
+    option_place = [
         "1 Binnenland",
         "2 Binnenland",
         "2 Küste und Inseln der Ostsee",
@@ -90,15 +90,15 @@ def more_information_wind():
         "4 Binnenland",
         "4 Küste der Nord- und Ostsee und Inseln der Ostsee",
         "4 Inseln der Nordsee"
-    }
-    option_building_height = {
+    ]
+    option_building_height = [
         "< 10m",
         "10 m <h< 18m",
         "18 m < h < 25 m"
-    }
+    ]
     st.session_state.snow_and_wind.clear()
-    st.session_state.selected_option_place = st.selectbox("Windzone und Standort", list(option_place))
-    st.session_state.selected_option_building_height = st.selectbox("Gebäudehöhe", list(option_building_height))
+    st.session_state.selected_option_place = st.selectbox("Windzone und Standort", list(option_place), index=1)
+    st.session_state.selected_option_building_height = st.selectbox("Gebäudehöhe", list(option_building_height), index=0)
     st.session_state.wind_load = st.session_state.data_storage_wind[st.session_state.selected_option_place][st.session_state.selected_option_building_height]*0.7
     st.session_state.wind_load = round(st.session_state.wind_load, 2)
     new_wind=[st.session_state.snow_load, st.session_state.wind_load]
@@ -603,7 +603,7 @@ if "layer_load_roof" not in st.session_state:
     }
 # Beginn der Benutzeroberfläche
 st.header("Vordimensionierung Einfeldträger")
-st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
+st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit eier Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
 # Statisches System
 with st.container(border=True):
     col1, col3 = st.columns(2)
