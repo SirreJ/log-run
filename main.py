@@ -8,7 +8,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 st.set_page_config(page_title="Profilberechnung Einfeldträger", page_icon=None, layout='wide')
 
-
+# erstellen eines Links
+def create_link(url,text):
+    return '<a href="{}" target="_blank">{}</a>'.format(url, text)
 # Schnee- und Windlast
 if "wind_load" not in st.session_state:
     st.session_state.wind_load = 0
@@ -623,10 +625,16 @@ with st.container(border=True):
                 with col1:
                     img_url_snow="https://www.die.de/dokumentation/holzbau-dach/technik/images/schneelastzonen.jpg"
                     st.image(img_url_snow, caption="Schneelastzonen")
+                    text = "Hier gelangst du zur Quelle des Bilds."
+                    link_html =create_link(img_url_snow,text)
+                    st.markdown(link_html, unsafe_allow_html=True)
                     more_information_snow()
                 with col2:
                     img_url_wind="https://www.obo.de/fileadmin/default/OBO/Produkte/Transienten-_und_Blitzschutz-Systeme/Planungshilfen/VdS_Richtlinie__Blitzschutzklassen-Einteilung/Ermitteln_der_Windlast/deutschland-karte-windzonen.png"
                     st.image(img_url_wind, caption="Windlastzonen")
+                    text = "Hier gelangst du zur Quelle des Bilds."
+                    link_html =create_link(img_url_wind,text)
+                    st.markdown(link_html, unsafe_allow_html=True)
                     more_information_wind()
         with st.container():
             col1, col2 = st.columns(2)
