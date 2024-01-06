@@ -170,7 +170,7 @@ def dach_aufbau():
     image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
     st.session_state.image_dachaufbau = Image.open(image_dachaufbau_auswahl)
     # Zeigen Sie den ausgewählten Wert neben der Option an
-    st.write(f"{st.session_state.selected_option} : {st.session_state.selected_option_value} kN/m²")
+    st.write(f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²")
 #aufnahme der Streckenlasten
 def distributed_load_information(distributed_load, counter_distributed_load):
     counter_distributed_load=st.session_state.counter_distributed_load
@@ -1022,22 +1022,37 @@ def variant_comparison():
 # Variantenvergleich
 with st.expander("Weitere Informationen"):
     variant_comparison()
-
-report_text = "Hallo"
-text_2 = "text rechts daneben"
-
+# Ausgabe der Ergebnisse als PDF
 export_as_pdf = st.button("PDF erstellen")
-
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Dimensionierung Einfeldträger</a>'
 
+# Beschriftung der PDF
+titel="Dimensionierung Einfeldträger"
+länge=f"Spannweite = {length}m"
+breite=f"Lasteinzugsbreite = {grid}m"
+dach=st.session_state.more_information_roof[st.session_state.selected_option]
+gewichts_last=f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²"
+#lef=f"q{len(st.session_state.distributed_load_array)-1} = Lasteinzugsbreite x {st.session_state.selected_option} = {st.session_state.distributed_load_array[{len(st.session_state.distributed_load_array)-1}]['distributed_load']}kN/m"
+
 if export_as_pdf:
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(20, 10, report_text)
-    pdf.cell(20, 10, text_2)
+    pdf.set_font('Arial', '', 12)
+
+    pdf.cell(0, 5, titel, ln=True)
+    pdf.ln(10)
+    pdf.cell(60, 5, länge)
+    pdf.cell(60, 5, breite, ln=True)
+    pdf.ln(10)
+    pdf.multi_cell(0, 5, dach)
+    pdf.cell(60, 5, gewichts_last, ln=True)
+    #pdf.cell(60, 5, lef, ln=True)
+   # if len(st.session_state.forces_array) !=0:
+  #      for point in st.session_state.forces_array:
+
+        
     
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
 
