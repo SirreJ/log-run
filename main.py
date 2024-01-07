@@ -365,6 +365,10 @@ def do_calculations_system():
                 indexCounter += 1  # Hochzählen, damit jedes Objekt einzeln abgefragt wird.
             else:
                 indexCounter += 1
+        # den rechtsseitigen Punktlasten wieder die richtige Position zuweisen.
+        for forces_side in st.session_state.forces_array:
+            if forces_side["side"] == "right":
+                forces_side['position'] = length - forces_side['position']
     elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0:
         st.session_state.weight_calculation_option = 3
         st.session_state.maximum_moment = 0
@@ -419,7 +423,7 @@ def do_calculations_system():
                         # Überprüfung, ob die folgenden Werte noch links sind
                         count_left = 0
                         for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
-                            if st.session_state[index_count_side]['side'] == 'left':
+                            if st.session_state.forces_array[index_count_side]['side'] == 'left':
                                 count_left += 1
                         index_counter_position += 1
                         # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
@@ -450,7 +454,7 @@ def do_calculations_system():
                         # Überprüfung, ob die folgenden Werte noch links sind
                         count_right = 0
                         for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
-                            if st.session_state[index_count_side]['side'] == 'right':
+                            if st.session_state.forces_array[index_count_side]['side'] == 'right':
                                 count_right += 1
                         index_counter_position += 1
                         # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
@@ -508,6 +512,12 @@ def do_calculations_system():
         st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
+    # den rechtsseitigen Punktlasten wieder die richtige Position zuweisen.
+    for forces_side in st.session_state.forces_array:
+        st.write("ich werde ausgeführt")
+        st.write(forces_side["side"])
+        st.write(forces_side['position'])
+    st.write(st.session_state.forces_array)
 # Zeichnung des statischen Systems
 def drawing_system():
     # Systemlinie
@@ -520,13 +530,13 @@ def drawing_system():
     fig, ax = plt.subplots()
     ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
     ax.set_title('statisches System')
-    plt.text(startpoint_a+((endpoint_b-startpoint_a)/2), middle_of_canvas_y-0.5, f'{length}m', fontsize=12, color='black', ha='center', va='center')
+    plt.text(startpoint_a+((endpoint_b-startpoint_a)/2), middle_of_canvas_y-0.5, f'{length}m', fontsize=8, color='black', ha='center', va='center')
     #Auflager
     #Festlager
     x_values_fixed_support = np.array([startpoint_a, startpoint_a+0.5, startpoint_a-0.5, startpoint_a])
     y_values_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
     ax.plot(x_values_fixed_support, y_values_fixed_support, marker=',', linestyle='-', color='black')
-    plt.text(startpoint_a-1, middle_of_canvas_y-0.5, 'A', fontsize=12, color='black', ha='center', va='center')
+    plt.text(startpoint_a-1, middle_of_canvas_y-0.5, 'A', fontsize=8, color='black', ha='center', va='center')
     counter_slashes_fixed = 0
     while (counter_slashes_fixed<5):
          x_values_fixed_support_slash = np.array([startpoint_a-0.6+0.2*counter_slashes_fixed, startpoint_a-0.4+0.2*counter_slashes_fixed])
@@ -537,7 +547,7 @@ def drawing_system():
     x_values_not_fixed_support = np.array([endpoint_b, endpoint_b+0.5, endpoint_b-0.5, endpoint_b])
     y_values_not_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
     ax.plot(x_values_not_fixed_support, y_values_not_fixed_support, marker=',', linestyle='-', color='black')
-    plt.text(endpoint_b+1, middle_of_canvas_y-0.5, 'B', fontsize=12, color='black', ha='center', va='center')
+    plt.text(endpoint_b+1, middle_of_canvas_y-0.5, 'B', fontsize=8, color='black', ha='center', va='center')
     x_value_litle_line = np.array([endpoint_b-0.7, endpoint_b+0.7])
     y_value_litle_line = np.array([middle_of_canvas_y-1.2, middle_of_canvas_y-1.2])
     ax.plot(x_value_litle_line, y_value_litle_line, marker=',', linestyle='-', color='black')
@@ -565,7 +575,7 @@ def drawing_system():
                 y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
                 ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
                 counter_arrows_dist +=1
-            plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=12, color='black', ha='left', va='center')       
+            plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=8, color='black', ha='left', va='center')       
     #Punktlast
     if len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]["distributed_load"] ==0:
         for arrow in st.session_state.forces_array:
@@ -576,7 +586,7 @@ def drawing_system():
             x_value_stick = np.array([force_location_x, force_location_x])
             y_value_stick = np.array([middle_of_canvas_y+0.1, middle_of_canvas_y+4])
             ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
-            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
+            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=8, color='black', ha='center', va='center')
     else:
         for arrow in st.session_state.forces_array:
             force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
@@ -586,7 +596,7 @@ def drawing_system():
             x_value_stick = np.array([force_location_x, force_location_x])
             y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
             ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
-            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
+            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=8, color='black', ha='center', va='center')
 
     plt.xlim(-2,12)
     plt.ylim(-2,12)
@@ -1049,11 +1059,15 @@ if export_as_pdf:
     pdf.multi_cell(0, 5, dach)
     pdf.cell(60, 5, gewichts_last, ln=True)
     #pdf.cell(60, 5, lef, ln=True)
-   # if len(st.session_state.forces_array) !=0:
-  #      for point in st.session_state.forces_array:
+    if len(st.session_state.forces_array) !=0:
+        pdf.multi_cell(0, 5, "Punktlasten:")
+        for point in st.session_state.forces_array:
+            pdf.cell(50, 5, f"F{point['counter_forces']+1} = {point['point_load']}kN", ln=True)
+    if len(st.session_state.distributed_load_array) !=0:
+        pdf.multi_cell(0, 5, "Streckenlast:")
+        for dist in st.session_state.distributed_load_array:
+            pdf.cell(50, 5, f"q{dist['counter_distributed_load']} = {dist['distributed_load']}kN/m", ln=True)
 
-        
-    
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
 
     st.markdown(html, unsafe_allow_html=True)
