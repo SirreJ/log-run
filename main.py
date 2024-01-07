@@ -1059,15 +1059,17 @@ if export_as_pdf:
     pdf.multi_cell(0, 5, dach)
     pdf.cell(60, 5, gewichts_last, ln=True)
     #pdf.cell(60, 5, lef, ln=True)
+    pdf.ln(10)
     if len(st.session_state.forces_array) !=0:
         pdf.multi_cell(0, 5, "Punktlasten:")
         for point in st.session_state.forces_array:
             pdf.cell(50, 5, f"F{point['counter_forces']+1} = {point['point_load']}kN", ln=True)
+    pdf.ln(10)
     if len(st.session_state.distributed_load_array) !=0:
-        pdf.multi_cell(0, 5, "Streckenlast:")
+        pdf.multi_cell(0, 5, "Streckenlasten:")
         for dist in st.session_state.distributed_load_array:
             pdf.cell(50, 5, f"q{dist['counter_distributed_load']} = {dist['distributed_load']}kN/m", ln=True)
-
+    pdf.ln(10)
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
 
     st.markdown(html, unsafe_allow_html=True)
