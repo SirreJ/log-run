@@ -1064,6 +1064,26 @@ if export_as_pdf:
             pdf.cell(50, 5, f"q{dist['counter_distributed_load']+1} = {dist['distributed_load']}kN/m", ln=True)
     pdf.ln(10)
     pdf.image("image_system.png", x=10,y=pdf.get_y() + 10, w= 150)
+    pdf.ln(100)
+    pdf.cell(60, 5, "Auflagerreaktionen A und B", ln=True)
+    pdf.ln(10)
+    pdf.cell(60, 5, f"A = {st.session_state.support_forces[0]['support_force']} kN und B = {st.session_state.support_forces[1]['support_force']} kN", ln=True)
+    pdf.ln(10)
+    pdf.cell(60, 5, "Maximales Moment", ln=True)
+    pdf.ln(10)
+    pdf.cell(60, 5, f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.", ln=True)
+    pdf.ln(10)
+    if st.session_state.results_variant != 0:
+        for item in st.session_state.results_variant:
+            pdf.set_font('Arial', 'B', 12)
+            pdf.cell(60, 5, item["title"], ln=True)
+            pdf.set_font('Arial', '', 12)
+            pdf.multi_cell(0, 5, item["text"])
+            pdf.ln(10)
+    #pdf.cell(60, 5, gewichts_last, ln=True)
+    #pdf.cell(60, 5, gewichts_last, ln=True)
+    #pdf.cell(60, 5, gewichts_last, ln=True)
+
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
 
     st.markdown(html, unsafe_allow_html=True)
