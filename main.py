@@ -461,7 +461,6 @@ def do_calculations_system():
                         st.session_state.position = last_added_position
                         position_between_point_loads = 0
                         position_between_point_loads = st.session_state.position_max_momentum / float(position_added_distributed_load)
-                        st.write(position_between_point_loads)
                         if st.session_state.position_max_momentum < 0:
                             st.session_state.position = last_added_position
                             break
@@ -512,12 +511,6 @@ def do_calculations_system():
         st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
-    # den rechtsseitigen Punktlasten wieder die richtige Position zuweisen.
-    for forces_side in st.session_state.forces_array:
-        st.write("ich werde ausgeführt")
-        st.write(forces_side["side"])
-        st.write(forces_side['position'])
-    st.write(st.session_state.forces_array)
 # Zeichnung des statischen Systems
 def drawing_system():
     # Systemlinie
@@ -602,6 +595,7 @@ def drawing_system():
     plt.ylim(-2,12)
     plt.axis('off')
     st.pyplot(fig)
+    plt.savefig("image_system.png", dpi=150, format='png')
 if "layer_load_roof" not in st.session_state:
     st.session_state.layer_load_roof={
         "Kies 5cm": 1,
@@ -1044,21 +1038,20 @@ länge=f"Spannweite = {length}m"
 breite=f"Lasteinzugsbreite = {grid}m"
 dach=st.session_state.more_information_roof[st.session_state.selected_option]
 gewichts_last=f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²"
-#lef=f"q{len(st.session_state.distributed_load_array)-1} = Lasteinzugsbreite x {st.session_state.selected_option} = {st.session_state.distributed_load_array[{len(st.session_state.distributed_load_array)-1}]['distributed_load']}kN/m"
 
-if export_as_pdf:
+if export_as_pdf: 
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font('Arial', '', 12)
+    pdf.set_font('Arial', 'B', 12)
 
     pdf.cell(0, 5, titel, ln=True)
+    pdf.set_font('Arial', '', 12)
     pdf.ln(10)
     pdf.cell(60, 5, länge)
     pdf.cell(60, 5, breite, ln=True)
     pdf.ln(10)
     pdf.multi_cell(0, 5, dach)
     pdf.cell(60, 5, gewichts_last, ln=True)
-    #pdf.cell(60, 5, lef, ln=True)
     pdf.ln(10)
     if len(st.session_state.forces_array) !=0:
         pdf.multi_cell(0, 5, "Punktlasten:")
@@ -1068,8 +1061,9 @@ if export_as_pdf:
     if len(st.session_state.distributed_load_array) !=0:
         pdf.multi_cell(0, 5, "Streckenlasten:")
         for dist in st.session_state.distributed_load_array:
-            pdf.cell(50, 5, f"q{dist['counter_distributed_load']} = {dist['distributed_load']}kN/m", ln=True)
+            pdf.cell(50, 5, f"q{dist['counter_distributed_load']+1} = {dist['distributed_load']}kN/m", ln=True)
     pdf.ln(10)
+    pdf.image("image_system.png", x=10,y=pdf.get_y() + 10, w= 150)
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
 
     st.markdown(html, unsafe_allow_html=True)
