@@ -1006,12 +1006,15 @@ with st.container(border=True):
         for item in st.session_state.results_variant:
             st.subheader(item["title"])
             st.text(item["text"])
+if "variant_comparison_list" not in st.session_state:
+    st.session_state.variant_comparison_list=[]
 def variant_comparison():
         if len(st.session_state.results_variant) != 0:
             # Dynamisch Spalten erstellen
             num_columns = len(st.session_state.results_variant)
             dynamic_columns = st.columns(num_columns)
             # Füllen der Spalten mit Daten
+            st.session_state.variant_comparison_list.clear()
             for i, col in enumerate(dynamic_columns):
                 col.subheader(f"Variante {i+1}")
                 col.write(f"Profil: {st.session_state.results_variant[i]['profil']}")
@@ -1022,7 +1025,20 @@ def variant_comparison():
                 col.write(f"max Moment mit Eigengewicht: {st.session_state.results_variant[i]['max_moment']}kNm")
                 col.write(f"erf A: {st.session_state.results_variant[i]['erf_a']}cm²")
                 col.write(f"erf W: {st.session_state.results_variant[i]['erf_w']}cm³")
-                col.write(f"erf I: {st.session_state.results_variant[i]['erf_i']}cm⁴")     
+                col.write(f"erf I: {st.session_state.results_variant[i]['erf_i']}cm⁴") 
+                add_variant_list=[
+                f"""Variante {i+1}
+                Profil: {st.session_state.results_variant[i]['profil']}
+                Höhe: {st.session_state.results_variant[i]['height']}cm
+                Breite: {st.session_state.results_variant[i]['width']}cm
+                Eigengewicht: {st.session_state.results_variant[i]['weight']}kg
+                max Moment mit Eigengewicht: {st.session_state.results_variant[i]['max_moment']}kNm
+                erf A: {st.session_state.results_variant[i]['erf_a']}cm²
+                erf W: {st.session_state.results_variant[i]['erf_w']}cm³
+                erf I: {st.session_state.results_variant[i]['erf_i']}cm^4""",
+                st.session_state.image_profil_list[st.session_state.results_variant[i]['profil']]
+                ]
+                st.session_state.variant_comparison_list.append(add_variant_list)
 # Variantenvergleich
 with st.expander("Weitere Informationen"):
     variant_comparison()
@@ -1080,9 +1096,10 @@ if export_as_pdf:
             pdf.set_font('Arial', '', 12)
             pdf.multi_cell(0, 5, item["text"])
             pdf.ln(10)
-    #pdf.cell(60, 5, gewichts_last, ln=True)
-    #pdf.cell(60, 5, gewichts_last, ln=True)
-    #pdf.cell(60, 5, gewichts_last, ln=True)
+        for variants in st.session_state.variant_comparison_list:
+            pdf.image(variants[1], w=20)
+            pdf.multi_cell(0, 5, variants[0])
+            pdf.ln(10)
 
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
 
