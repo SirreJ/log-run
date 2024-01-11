@@ -169,8 +169,8 @@ def dach_aufbau():
     st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()))
     st.session_state.selected_option_value = option_values[st.session_state.selected_option]
     # Passendes Bild Laden
-    image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
-    st.session_state.image_dachaufbau = Image.open(image_dachaufbau_auswahl)
+    st.session_state.image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
+    st.session_state.image_dachaufbau = Image.open(st.session_state.image_dachaufbau_auswahl)
     # Zeigen Sie den ausgewählten Wert neben der Option an
     st.write(f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²")
     # Wert des ausgewählten Dachaufbaus
@@ -583,34 +583,34 @@ with st.container(border=True):
                                     """,
                                     "extensive Dachbegrünung": 
                                     f""" 
-                                    extensive Dachbegrünung 10cm = {st.session_state.layer_load_roof['extensive Dachbegrünung 10cm']}kN/m²
-                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                                    Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²        
+                                    1 extensive Dachbegrünung 10cm = {st.session_state.layer_load_roof['extensive Dachbegrünung 10cm']}kN/m²
+                                    2 zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    3 Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    4 Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    5 Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²        
                                     """,
                                     "intensive Dachbegrünung": 
                                     f""" 
-                                    intensive Dachbegrünung 20cm = {st.session_state.layer_load_roof['intensive Dachbegrünung 20cm']}kN/m²
-                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                                    Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
+                                    1 intensive Dachbegrünung 20cm = {st.session_state.layer_load_roof['intensive Dachbegrünung 20cm']}kN/m²
+                                    2 zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    3 Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    4 Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    5 Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
                                     """,
                                     "leichter Dachaufbau": 
                                     f""" 
-                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                                    Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
+                                    1 zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    2 Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    3 Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    4 Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
                                     """,
                                     "schwerer Dachaufbau": 
                                     f""" 
-                                    Kies 5cm = {st.session_state.layer_load_roof['Kies 5cm']}kN/m²
-                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                                    BSH 4cm = {st.session_state.layer_load_roof['BSH 4cm']}kN/m²
+                                    1 Kies 5cm = {st.session_state.layer_load_roof['Kies 5cm']}kN/m²
+                                    2 zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    3 Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    4 Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    5 BSH 4cm = {st.session_state.layer_load_roof['BSH 4cm']}kN/m²
                                     """,
                                 }
             st.text(st.session_state.more_information_roof[st.session_state.selected_option])
@@ -645,8 +645,7 @@ with st.container(border=True):
             st.session_state.forces_array.clear()
             st.session_state.counter_forces=0
             last_auswahl()
-        if st.button("Berechnen"):
-            do_calculations_system()
+        do_calculations_system()
     with col3:
         # Darstellungsbereich
         st.header("Ergebnisse statisches System")
@@ -732,7 +731,12 @@ with st.container(border=True):
         st.subheader("Maximales Moment")
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
-# Laden von Daten, @st.cache damit sie nur geladen werden, wenn man sie braucht.
+        with st.expander("Normalkraftverlauf"):
+            st.write("Platzhalter")
+        with st.expander("Querkraftverlauf"):
+            st.write("Platzhalter")
+        with st.expander("Momentenverlauf"):
+            st.write("Platzhalter")       
 if "wood_data" not in st.session_state:
     st.session_state.wood_data = pd.read_excel('tabellen/Tabelle_Kantholz.xlsx')
 if "data_storage_wood" not in st.session_state:
@@ -762,7 +766,8 @@ if "data_storage_ipe" not in st.session_state:
             "availableArea": rows[1]['A'],
             "weightPerMeterInKG": rows[1]['G'],
             "availableITrägheitsmoment": int(rows[1]['I']),
-            "available_w": rows[1]['W']
+            "available_w": rows[1]['W'],
+            "available_area_steg":rows[1]['Asteg']
         }
         st.session_state.data_storage_ipe[key] = values
 if "tension_rd" not in st.session_state: 
@@ -777,7 +782,7 @@ if "number_k0" not in st.session_state:
         "IPE": 15,
         "Kantholz": 312
     }
-if "number_k0" not in st.session_state:
+if "schub_rd" not in st.session_state:
     st.session_state.schub_rd = {
         "IPE": 12.6,
         "Kantholz": 0.12
@@ -822,63 +827,68 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
     st.session_state.needed_i_traegheitsmoment=0
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
+    neededw=st.session_state.needed_w
+    availablew=st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]
     if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
         results_variant = f'''
-        Das gewählte Profil passt nicht.
+        Das gewählte Profil besteht die Tragfähigkeitsprüfung nicht ✖ 
         erf W > vorh W
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
         '''
+        result_w=f"${neededw}cm^3 \gt {availablew}cm^3$"
     else:
-        if (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] > 15:
-            # Gebrauchstauglichkeitsnachweis
-            st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
-            st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
-            if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
-                results_variant = f'''
-                Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
-                erf I < vorh I
-                {st.session_state.needed_i_traegheitsmoment}cm⁴ < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
-                '''
-            else:
-                results_variant = f'''
-                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
-                Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises.
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
-                erf I > vorh I
-                {st.session_state.needed_i_traegheitsmoment}cm⁴ > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm⁴
-                '''         
-        elif (length * 100) / st.session_state.data_storage_wood[cross_section_wood_input]["h"] < 11:
-            # Schubnachweis mit Sicherheitsbeiwert von 1.4
-            st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd[material_choice])
-            if st.session_state.needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
-                results_variant = f'''
-                Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
-                erf A < vorh A
-                {st.session_state.needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
-                '''
-            else:
-                results_variant = f'''
-                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
-                Neuen Querschnitt wählen aufgrund des Schubnachweises. 
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
-                erf A > vorh A
-                {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
-                '''
-        else:
-            results_variant = f'''
-            Das Profil der Variante {counter_variant} besteht die Prüfung.
-            Es ist kein Nachweis der Gebrauchstauglichkeit oder der Spannung notwendig.
-            erf W < vorh W
-            {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
-            '''
-    # Speichern der Ergebnisse
-    result_variant_array = {"title": results_variant_title, "text": results_variant, "profil": material_choice,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe}
+        results_variant = f'''
+        Tragfähigkeitsprüfung bestanden ✔
+        erf W < vorh W
+        {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+        '''
+        result_w=f"${neededw}cm^3 \lt {availablew}cm^3$"
+    # Gebrauchstauglichkeitsnachweis
+    st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
+    st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
+    neededi=st.session_state.needed_i_traegheitsmoment
+    availablei=st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']
+    if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
+        results_variant += f'''
+        Durchbiegungsnachweis bestanden ✔
+        erf I < vorh I
+        {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        '''
+        result_i=f"${neededi}cm^4 \lt {availablei}cm^4$"
+    else:
+        results_variant += f'''
+        Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
+        erf I > vorh I
+        {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        '''
+        result_i=f"${neededi}cm^4 \gt {availablei}cm^4$"     
+    # Schubnachweis mit Sicherheitsbeiwert von 1.4
+    st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd[material_choice])
+    st.session_state.needed_area = round(st.session_state.needed_area, 2)
+    neededa=st.session_state.needed_area
+    availablea=st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']
+    if st.session_state.needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
+        results_variant += f'''
+        Schubnachweis bestanden ✔
+        erf A < vorh A
+        {st.session_state.needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+        '''
+        result_a=f"${neededa}cm^2 \lt {availablea}cm^2$"
+    else:
+        results_variant += f'''
+        Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
+        erf A > vorh A
+        {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+        '''
+        result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"    
+    w_compare_wood=r"$erf W \leq vorh W$"
+    w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
+    i_compare_wood=r"$erf I \leq vorh I$"
+    i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
+    a_compare_wood=r"$erf A \leq vorh A$"
+    a_how_wood=r"$erf A = \frac{3 \cdot maxV_{d}}{2 \cdot \tau_{Rd}}$"
+    # Speichern der Ergebnissef"{material_choice} und {cross_section_wood_input}"
+    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
     # Ersetzen der Ergebnisse
     st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
 if "image_profil_list" not in st.session_state:
@@ -918,63 +928,68 @@ def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.needed_i_traegheitsmoment=0
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
+    neededw=st.session_state.needed_w
+    availablew=st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]
     if st.session_state.needed_w > st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]:
         results_variant = f'''
-        Das gewählte Profil passt nicht.
+        Das gewählte Profil besteht die Tragfähigkeitsprüfung nicht ✖
         erf W > vorh W
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
         '''
+        result_w=f"${neededw}cm^3 \gt {availablew}cm^3$"
     else:
-        if (length * 100) / st.session_state.data_storage_ipe[cross_section_ipe_input]["h"] > 22:
-            # Gebrauchstauglichkeitsnachweis
-            st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
-            st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
-            if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
-                results_variant = f'''
-                Der Tragfähigkeitsnachweis und der Gebrauchstauglichkeitsnachweis bestehen die Prüfung.
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
-                erf I < vorh I
-                {st.session_state.needed_i_traegheitsmoment}cm⁴ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm⁴
-                '''
-            else:
-                results_variant = f'''
-                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
-                Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises.
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
-                erf I > vorh I
-                {st.session_state.needed_i_traegheitsmoment}cm⁴ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm⁴
-                '''         
-        elif (length * 100) / st.session_state.data_storage_ipe[cross_section_ipe_input]["h"] < 6:
-            # Schubnachweis mit Sicherheitsbeiwert von 1.4
-            st.session_state.needed_area = (st.session_state.max_v * 1.4) / st.session_state.schub_rd[material_choice]
-            if st.session_state.needed_area <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableArea"]:
-                results_variant = f'''
-                Der Tragfähigkeitsnachweis und der Schubnachweis bestehen die Prüfung.
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
-                erf A < vorh A
-                {st.session_state.needed_area}cm² < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableArea']}cm²
-                '''
-            else:
-                results_variant = f'''
-                Das Profil der Variante {counter_variant} besteht die Prüfung nicht.
-                Neuen Querschnitt wählen aufgrund des Schubnachweises. 
-                erf W < vorh W
-                {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
-                erf A > vorh A
-                {st.session_state.needed_area}cm² > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableArea']}cm²
-                '''
-        else:
-            results_variant = f'''
-            Das Profil der Variante {counter_variant} besteht die Prüfung.
-            Es ist kein Nachweis der Gebrauchstauglichkeit oder der Spannung notwendig.
-            erf W < vorh W
-            {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
-            '''
+        results_variant = f'''
+        Tragfähigkeitsprüfung bestanden ✔
+        erf W < vorh W
+        {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+        '''
+        result_w=f"${neededw}cm^3 \lt {availablew}cm^3$"
+    # Gebrauchstauglichkeitsnachweis
+    st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
+    st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
+    neededi=st.session_state.needed_i_traegheitsmoment
+    availablei=st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]
+    if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
+        results_variant += f'''
+        Durchbiegungsnachweis bestanden ✔
+        erf I < vorh I
+        {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        '''
+        result_i=f"${neededi}cm^4 \lt {availablei}cm^4$"
+    else:
+        results_variant += f'''
+        Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
+        erf I > vorh I
+        {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        '''
+        result_i=f"${neededi}cm^4 \gt {availablei}cm^4$"
+    # Schubnachweis mit Sicherheitsbeiwert von 1.4
+    st.session_state.needed_area = (st.session_state.max_v * 1.4) / st.session_state.schub_rd[material_choice]
+    st.session_state.needed_area = round(st.session_state.needed_area, 2)
+    neededa=st.session_state.needed_area
+    availablea=st.session_state.data_storage_ipe[cross_section_ipe_input]["available_area_steg"]
+    if st.session_state.needed_area <= st.session_state.data_storage_ipe[cross_section_ipe_input]["available_area_steg"]:
+        results_variant += f'''
+        Schubnachweis bestanden ✔
+        erf Asteg < vorh Asteg
+        {st.session_state.needed_area}cm² < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
+        '''
+        result_a=f"${neededa}cm^2 \lt {availablea}cm^2$"
+    else:
+        results_variant += f'''
+        Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
+        erf Asteg > vorh Asteg
+        {st.session_state.needed_area}cm² > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
+        '''
+        result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"
     # Speichern der Ergebnisse
-    result_variant_array = {"title": results_variant_title, "text": results_variant, "profil": material_choice,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_ipe[cross_section_ipe_input]["h"], "width":st.session_state.data_storage_ipe[cross_section_ipe_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe}
+    w_compare_wood=r"$erf W \leq vorh W$"
+    w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
+    i_compare_wood=r"$erf I \leq vorh I$"
+    i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
+    a_compare_wood=r"$erf A_{Steg} \leq vorh A_{Steg}$"
+    a_how_wood=r"$erf A_{Steg} = \frac{maxV_{d}}{\tau_{Rd}}$"
+    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_ipe_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_ipe_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_ipe[cross_section_ipe_input]["h"], "width":st.session_state.data_storage_ipe[cross_section_ipe_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
     # Ersetzen der Ergebnisse
     st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
 def next_variant():
@@ -1025,6 +1040,7 @@ with st.container(border=True):
         # Ergebnisse der Überprüfung
         for item in st.session_state.results_variant:
             st.subheader(item["title"])
+            st.write(item["properties"])
             st.text(item["text"])
 if "variant_comparison_list" not in st.session_state:
     st.session_state.variant_comparison_list=[]
@@ -1037,18 +1053,27 @@ def variant_comparison():
             st.session_state.variant_comparison_list.clear()
             for i, col in enumerate(dynamic_columns):
                 col.subheader(f"Variante {i+1}")
-                col.write(f"Profil: {st.session_state.results_variant[i]['profil']}")
                 col.image(st.session_state.results_variant[i]['image'])
-                col.write(f"Höhe: {st.session_state.results_variant[i]['height']}cm")
-                col.write(f"Breite: {st.session_state.results_variant[i]['width']}cm")
-                col.write(f"Eigengewicht: {st.session_state.results_variant[i]['weight']}kg")
-                col.write(f"max Moment mit Eigengewicht: {st.session_state.results_variant[i]['max_moment']}kNm")
-                col.write(f"erf A: {st.session_state.results_variant[i]['erf_a']}cm²")
-                col.write(f"erf W: {st.session_state.results_variant[i]['erf_w']}cm³")
-                col.write(f"erf I: {st.session_state.results_variant[i]['erf_i']}cm⁴") 
+                col.write(f"Profil = {st.session_state.results_variant[i]['profil_text']}")
+                col.write(f"Höhe = {st.session_state.results_variant[i]['height']}cm")
+                col.write(f"Breite = {st.session_state.results_variant[i]['width']}cm")
+                col.write(f"Eigengewicht = {st.session_state.results_variant[i]['weight']}kg")
+                col.write(f"max Moment mit Eigengewicht = {st.session_state.results_variant[i]['max_moment']}kNm")
+                col.write("Tragfähigkeit:")
+                col.markdown(st.session_state.results_variant[i]['w_compare'])
+                col.markdown(st.session_state.results_variant[i]['w_how'])
+                col.markdown(st.session_state.results_variant[i]['result_w'])
+                col.write("Durchbiegungsnachweis:")
+                col.markdown(st.session_state.results_variant[i]['i_compare'])
+                col.markdown(st.session_state.results_variant[i]['i_how'])
+                col.markdown(st.session_state.results_variant[i]['result_i']) 
+                col.write("Schubnachweis:")
+                col.markdown(st.session_state.results_variant[i]['a_compare'])
+                col.markdown(st.session_state.results_variant[i]['a_how'])
+                col.markdown(st.session_state.results_variant[i]['result_a'])
                 add_variant_list=[
                 f"""Variante {i+1}
-                Profil: {st.session_state.results_variant[i]['profil']}
+                Profil: {st.session_state.results_variant[i]['profil_text']}
                 Höhe: {st.session_state.results_variant[i]['height']}cm
                 Breite: {st.session_state.results_variant[i]['width']}cm
                 Eigengewicht: {st.session_state.results_variant[i]['weight']}kg
@@ -1060,7 +1085,9 @@ def variant_comparison():
                 ]
                 st.session_state.variant_comparison_list.append(add_variant_list)
 # Variantenvergleich
-with st.expander("Weitere Informationen"):
+#with st.container(border=True):
+    #st.header("Vergleichsansicht")
+with st.expander("Vergleichsansicht"):
     variant_comparison()
 # Ausgabe der Ergebnisse als PDF
 export_as_pdf = st.button("PDF erstellen")
@@ -1089,7 +1116,7 @@ if export_as_pdf:
         pdf.ln(10)
         pdf.multi_cell(0, 5, dach)
         pdf.cell(60, 5, gewichts_last, ln=True)
-    pdf.ln(10)
+        pdf.image(st.session_state.image_dachaufbau_auswahl, x=10,y=pdf.get_y() -40, w= 30)
     if len(st.session_state.forces_array) !=0:
         pdf.multi_cell(0, 5, "Punktlasten:")
         for point in st.session_state.forces_array:
@@ -1100,8 +1127,8 @@ if export_as_pdf:
         for dist in st.session_state.distributed_load_array:
             pdf.cell(50, 5, f"q{dist['counter_distributed_load']+1} = {dist['distributed_load']}kN/m", ln=True)
     pdf.ln(10)
-    pdf.image("image_system.png", x=10,y=pdf.get_y() + 10, w= 150)
-    pdf.ln(100)
+    pdf.image("image_system.png", w= 150)
+    pdf.ln(10)
     pdf.cell(60, 5, "Auflagerreaktionen A und B", ln=True)
     pdf.ln(10)
     pdf.cell(60, 5, f"A = {st.session_state.support_forces[0]['support_force']} kN und B = {st.session_state.support_forces[1]['support_force']} kN", ln=True)
