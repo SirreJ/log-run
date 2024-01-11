@@ -1142,7 +1142,13 @@ if export_as_pdf:
             pdf.set_font('Arial', 'B', 12)
             pdf.cell(60, 5, item["title"], ln=True)
             pdf.set_font('Arial', '', 12)
-            pdf.multi_cell(0, 5, item["text"])
+            # Wörter zum Entfernen
+            words_to_remove = ['✖', '✔']
+            # Wörter entfernen
+            text_to_edit = item["text"]
+            for words in words_to_remove:
+                edited_text = text_to_edit.replace(words, '')
+            pdf.multi_cell(0, 5, edited_text)
             pdf.ln(10)
         for variants in st.session_state.variant_comparison_list:
             pdf.image(variants[1], w=20)
