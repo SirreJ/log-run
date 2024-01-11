@@ -66,6 +66,7 @@ def more_information_snow():
     st.session_state.snow_load = round(st.session_state.snow_load, 2)
     new_snow=[st.session_state.snow_load, st.session_state.wind_load]
     st.session_state.snow_and_wind.append(new_snow)
+    st.write(f"Schneelast = {st.session_state.snow_load}kn/m²")
     if np.isnan (st.session_state.snow_and_wind[0][0]):
         st.error("Bitte gib eine gültige Zone ein.")
         return
@@ -105,6 +106,7 @@ def more_information_wind():
     st.session_state.wind_load = round(st.session_state.wind_load, 2)
     new_wind=[st.session_state.snow_load, st.session_state.wind_load]
     st.session_state.snow_and_wind.append(new_wind)
+    st.write(f"Windlast = {st.session_state.wind_load}kn/m²")
     if np.isnan (st.session_state.snow_and_wind[0][1]):
         st.error("Bitte gib eine gültige Gebäudehöhe ein.")
         return
@@ -119,7 +121,7 @@ if "selected_option_value" not in st.session_state:
     st.session_state.selected_option_value=0
 # Bild Laden
 if "image_length_grid" not in st.session_state:
-    image_length_grid = Image.open('dachaufbau/Spannweite_Lasteinzugsbreite.jpg')
+    image_length_grid = Image.open('dachaufbau/Spannweite_Lasteinzugsbreite.png')
 def image_length_grid_place(length, grid):       
     # interaktive Beschriftung des Bilds
     draw = ImageDraw.Draw(image_length_grid)
@@ -140,10 +142,10 @@ if "image_dachaufbau" not in st.session_state:
     st.session_state.image_dachaufbau = 0
 def dach_aufbau():
     # Dictionary mit den Werten für jede Dachaufbauoption
-    extensive_dachbegrünung = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['extensive Dachbegrünung 10cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
-    intensive_dachbegrünung = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['intensive Dachbegrünung 20cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
-    leichter_dachaufbau = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
-    schwerer_dachaufbau = st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1] + st.session_state.layer_load_roof['Kies 5cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['BSH 4cm']
+    extensive_dachbegrünung = st.session_state.layer_load_roof['extensive Dachbegrünung 10cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
+    intensive_dachbegrünung = st.session_state.layer_load_roof['intensive Dachbegrünung 20cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
+    leichter_dachaufbau = st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
+    schwerer_dachaufbau = st.session_state.layer_load_roof['Kies 5cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['BSH 4cm']
     extensive_dachbegrünung = round(extensive_dachbegrünung, 2)
     intensive_dachbegrünung = round(intensive_dachbegrünung, 2)
     leichter_dachaufbau = round(leichter_dachaufbau, 2)
@@ -157,20 +159,30 @@ def dach_aufbau():
     }
     # Bilder Liste
     image_dachaufbau_list = {
-        'extensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_extensiv.jpg',
-        'intensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_intensiv.jpg',
-        'leichter Dachaufbau':'dachaufbau/Pikto_Dachaufbau_leicht.jpg',
-        'schwerer Dachaufbau':'dachaufbau/Pikto_Dachaufbau_schwer.jpg',
-        'kein Dachaufbau':'dachaufbau/Pikto_kein_Dachaufbau.jpg'
+        'extensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_extensiv.png',
+        'intensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_intensiv.png',
+        'leichter Dachaufbau':'dachaufbau/Pikto_Dachaufbau_leicht.png',
+        'schwerer Dachaufbau':'dachaufbau/Pikto_Dachaufbau_schwer.png',
+        'kein Dachaufbau':'dachaufbau/Pikto_kein_Dachaufbau.png'
     }
     # st.selectbox für die Auswahl des Dachaufbaus
-    st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()), help="Der Dachaufbau wird erst beim Klicken auf den Berechnungs Knopf in das statische System hinzugefügt. Die angegebene Last beinhaltet Schnee- und Windlast")
+    st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()))
     st.session_state.selected_option_value = option_values[st.session_state.selected_option]
     # Passendes Bild Laden
     image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
     st.session_state.image_dachaufbau = Image.open(image_dachaufbau_auswahl)
     # Zeigen Sie den ausgewählten Wert neben der Option an
     st.write(f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²")
+    # Wert des ausgewählten Dachaufbaus
+    option_distributed_load = st.session_state.selected_option_value * grid
+    option_distributed_load = round(option_distributed_load, 2)
+    new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
+    st.session_state.distributed_load_array.append(new_distributed_load)
+    st.session_state.counter_distributed_load += 1
+    if option_distributed_load ==0 :
+        st.session_state.distributed_load_array.pop()
+        st.session_state.counter_distributed_load -=1
+        st.write("ich werde ausgeführt")
 #aufnahme der Streckenlasten
 def distributed_load_information(distributed_load, counter_distributed_load):
     counter_distributed_load=st.session_state.counter_distributed_load
@@ -205,21 +217,22 @@ def last_auswahl():
         # st.radio für die Auswahl von "Streckenlast" oder "Punktlast"
         # Weisen Sie eindeutige Schlüssel mit dem Zähler zu
         load_type = st.radio("Lasteingabe", ["Streckenlast", "Punktlast"], key=f"load_type_{counter}")
-                    
         if load_type == "Streckenlast":
-            # st.text_input für die Streckenelast mit einem eindeutigen Schlüssel
-            distributed_load_input = st.text_input("Streckenelast (kN/m)", key=f"distributed_load_{counter}")
-            distributed_load = float(distributed_load_input) if distributed_load_input else 0
-            if st.button(f"Einfügen {counter}"):
-                distributed_load_information(distributed_load, st.session_state.counter_distributed_load)
+            with st.container():
+                    # st.text_input für die Streckenelast mit einem eindeutigen Schlüssel
+                    distributed_load_input = st.text_input("Streckenelast (kN/m)", key=f"distributed_load_{counter}")
+                    distributed_load = float(distributed_load_input) if distributed_load_input else 0
+                    distributed_load_information(distributed_load, st.session_state.counter_distributed_load)
         elif load_type == "Punktlast":
-            # st.text_input für die Punktlast und Position mit eindeutigen Schlüsseln
-            point_load_input = st.text_input("Punktlast (kN)", key=f"point_load_{counter}")
-            position_input = st.text_input("Position (m)", key=f"position_{counter}", help="Die Position ist die Entfernung der Punktlast von Auflager A.")
-            point_load = float(point_load_input) if point_load_input else 0
-            position = float(position_input) if position_input else 0
-            if st.button(f"Einfügen {counter}"):
-                point_load_properties(length, position, point_load, st.session_state.counter_forces)
+            with st.container():
+                col1, col2 = st.columns(2)
+                with col1:
+                    point_load_input = st.text_input("Punktlast (kN)", key=f"point_load_{counter}")
+                with col2:
+                    position_input = st.text_input("Position (m)", key=f"position_{counter}", help="Die Position ist die Entfernung der Punktlast von Auflager A.")
+                    point_load = float(point_load_input) if point_load_input else 0
+                    position = float(position_input) if position_input else 0
+                    point_load_properties(length, position, point_load, st.session_state.counter_forces)
         # Erhöhen Sie den Zähler für den nächsten Satz von Widgets
         counter += 1
         # st.checkbox für die Entscheidung, ob weitere Eingaben gemacht werden sollen
@@ -245,25 +258,8 @@ if "position" not in st.session_state:
     st.session_state.position = 0
 if "safety_factor" not in st.session_state:
     st.session_state.safety_factor = 1.4
-if "safe_counter_distributed_load" not in st.session_state:
-    st.session_state.safe_counter_distributed_load = None
 # Berechnung des statischen Systems
 def do_calculations_system():
-    # Wert des ausgewählten Dachaufbaus
-    if st.session_state.safe_counter_distributed_load is not None:
-        st.session_state.distributed_load_array.pop(st.session_state.safe_counter_distributed_load)
-        option_distributed_load = st.session_state.selected_option_value * grid
-        option_distributed_load = round(option_distributed_load, 2)
-        new_distributed_load = {"counter_distributed_load" : st.session_state.safe_counter_distributed_load, "distributed_load" : option_distributed_load}
-        st.session_state.distributed_load_array.insert(st.session_state.safe_counter_distributed_load, new_distributed_load)
-    else:
-        option_distributed_load = st.session_state.selected_option_value * grid
-        st.session_state.safe_counter_distributed_load = st.session_state.counter_distributed_load
-        option_distributed_load = round(option_distributed_load, 2)
-        new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
-        st.session_state.distributed_load_array.append(new_distributed_load)
-        st.session_state.counter_distributed_load = st.session_state.safe_counter_distributed_load
-        st.session_state.counter_distributed_load += 1
     #Bestimmung der Auflagerkräfte
     resulting_forces = 0
     support_force_a_vertical = 0
@@ -511,91 +507,6 @@ def do_calculations_system():
         st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
-# Zeichnung des statischen Systems
-def drawing_system():
-    # Systemlinie
-    startpoint_a = 0
-    endpoint_b = 10
-    middle_of_canvas_y = 5
-    x_values_systemline = np.array([startpoint_a, endpoint_b])
-    y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
-    # Matplotlib-Funktion zum Zeichnen der Linie
-    fig, ax = plt.subplots()
-    ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
-    ax.set_title('statisches System')
-    plt.text(startpoint_a+((endpoint_b-startpoint_a)/2), middle_of_canvas_y-0.5, f'{length}m', fontsize=8, color='black', ha='center', va='center')
-    #Auflager
-    #Festlager
-    x_values_fixed_support = np.array([startpoint_a, startpoint_a+0.5, startpoint_a-0.5, startpoint_a])
-    y_values_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
-    ax.plot(x_values_fixed_support, y_values_fixed_support, marker=',', linestyle='-', color='black')
-    plt.text(startpoint_a-1, middle_of_canvas_y-0.5, 'A', fontsize=8, color='black', ha='center', va='center')
-    counter_slashes_fixed = 0
-    while (counter_slashes_fixed<5):
-         x_values_fixed_support_slash = np.array([startpoint_a-0.6+0.2*counter_slashes_fixed, startpoint_a-0.4+0.2*counter_slashes_fixed])
-         y_values_fixed_support_slash = np.array([middle_of_canvas_y-1.3, middle_of_canvas_y-1])
-         ax.plot(x_values_fixed_support_slash, y_values_fixed_support_slash, marker=',', linestyle='-', color='black')
-         counter_slashes_fixed += 1
-    #Lostlager
-    x_values_not_fixed_support = np.array([endpoint_b, endpoint_b+0.5, endpoint_b-0.5, endpoint_b])
-    y_values_not_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
-    ax.plot(x_values_not_fixed_support, y_values_not_fixed_support, marker=',', linestyle='-', color='black')
-    plt.text(endpoint_b+1, middle_of_canvas_y-0.5, 'B', fontsize=8, color='black', ha='center', va='center')
-    x_value_litle_line = np.array([endpoint_b-0.7, endpoint_b+0.7])
-    y_value_litle_line = np.array([middle_of_canvas_y-1.2, middle_of_canvas_y-1.2])
-    ax.plot(x_value_litle_line, y_value_litle_line, marker=',', linestyle='-', color='black')
-    counter_slashes_fixed = 0
-    while (counter_slashes_fixed<5):
-         x_values_not_fixed_support_slash = np.array([endpoint_b-0.6+0.2*counter_slashes_fixed, endpoint_b-0.4+0.2*counter_slashes_fixed])
-         y_values_not_fixed_support_slash = np.array([middle_of_canvas_y-1.5, middle_of_canvas_y-1.2])
-         ax.plot(x_values_not_fixed_support_slash, y_values_not_fixed_support_slash, marker=',', linestyle='-', color='black')
-         counter_slashes_fixed += 1
-    #Streckenlast
-    for arrow_field in st.session_state.distributed_load_array:
-        if arrow_field["distributed_load"] != 0:
-            length_between_supports = endpoint_b-startpoint_a
-            x_value_distributed = np.array([startpoint_a, endpoint_b, endpoint_b, startpoint_a])
-            y_value_distributed = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
-            ax.plot(x_value_distributed, y_value_distributed, marker=',', linestyle='-', color='black')
-            length_between_supports = length_between_supports/7
-            counter_arrows_dist = 0
-            while counter_arrows_dist<8:
-                force_location_x = startpoint_a + length_between_supports*counter_arrows_dist
-                x_value_tip = np.array([force_location_x-0.1,force_location_x,force_location_x+0.1])
-                y_value_tip = np.array([middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"]])
-                ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
-                x_value_stick = np.array([force_location_x, force_location_x])
-                y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
-                ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
-                counter_arrows_dist +=1
-            plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=8, color='black', ha='left', va='center')       
-    #Punktlast
-    if len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]["distributed_load"] ==0:
-        for arrow in st.session_state.forces_array:
-            force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
-            x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
-            y_value_tip = np.array([middle_of_canvas_y+0.4, middle_of_canvas_y+0.1, middle_of_canvas_y+0.4])
-            ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
-            x_value_stick = np.array([force_location_x, force_location_x])
-            y_value_stick = np.array([middle_of_canvas_y+0.1, middle_of_canvas_y+4])
-            ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
-            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=8, color='black', ha='center', va='center')
-    else:
-        for arrow in st.session_state.forces_array:
-            force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
-            x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
-            y_value_tip = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array)])
-            ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
-            x_value_stick = np.array([force_location_x, force_location_x])
-            y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
-            ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
-            plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=8, color='black', ha='center', va='center')
-
-    plt.xlim(-2,12)
-    plt.ylim(-2,12)
-    plt.axis('off')
-    st.pyplot(fig)
-    plt.savefig("image_system.png", dpi=150, format='png')
 if "layer_load_roof" not in st.session_state:
     st.session_state.layer_load_roof={
         "Kies 5cm": 1,
@@ -629,82 +540,191 @@ with st.container(border=True):
             with st.container():
                 col1, col2 = st.columns(2)
                 with col1:
-                    img_url_snow="https://www.die.de/dokumentation/holzbau-dach/technik/images/schneelastzonen.jpg"
+                    img_url_snow="zonen_karten/schnee_last_zonen.png"
                     st.image(img_url_snow, caption="Schneelastzonen")
                     text = "Hier gelangst du zur Quelle des Bilds."
                     link_html =create_link(img_url_snow,text)
                     st.markdown(link_html, unsafe_allow_html=True)
                     more_information_snow()
                 with col2:
-                    img_url_wind="https://www.obo.de/fileadmin/default/OBO/Produkte/Transienten-_und_Blitzschutz-Systeme/Planungshilfen/VdS_Richtlinie__Blitzschutzklassen-Einteilung/Ermitteln_der_Windlast/deutschland-karte-windzonen.png"
+                    img_url_wind="zonen_karten/deutschland_karte_windzonen.png"
                     st.image(img_url_wind, caption="Windlastzonen")
                     text = "Hier gelangst du zur Quelle des Bilds."
                     link_html =create_link(img_url_wind,text)
                     st.markdown(link_html, unsafe_allow_html=True)
                     more_information_wind()
-        with st.container():
-            col1, col2 = st.columns(2)
-            with col1:
-                dach_aufbau()
-                with st.expander("Daten Dachaufbau"):
-                    # Genauer Dachaufbau
-                    if "more_information_roof" not in st.session_state:
-                        st.session_state.more_information_roof = {
-                            "kein Dachaufbau": 
-                            """ 
-                            
-                            """,
-                            "extensive Dachbegrünung": 
-                            f""" 
-                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
-                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
-                            extensive Dachbegrünung 10cm = {st.session_state.layer_load_roof['extensive Dachbegrünung 10cm']}kN/m²
-                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                            Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²        
-                            """,
-                            "intensive Dachbegrünung": 
-                            f""" 
-                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
-                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
-                            intensive Dachbegrünung 20cm = {st.session_state.layer_load_roof['intensive Dachbegrünung 20cm']}kN/m²
-                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                            Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
-                            """,
-                            "leichter Dachaufbau": 
-                            f""" 
-                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
-                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
-                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                            Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
-                            """,
-                            "schwerer Dachaufbau": 
-                            f""" 
-                            Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
-                            Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²
-                            Kies 5cm = {st.session_state.layer_load_roof['Kies 5cm']}kN/m²
-                            zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
-                            Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
-                            Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
-                            BSH 4cm = {st.session_state.layer_load_roof['BSH 4cm']}kN/m²
-                            """,
+            with st.container():
+                st.session_state.counter_distributed_load = 0
+                st.session_state.distributed_load_array.clear()
+                checkbox_label = "Hinzufügen der Wind- und Schneelast"
+                snow_wind_check=st.checkbox(checkbox_label, key="wind_snow")
+                if snow_wind_check:
+                    option_distributed_load = (st.session_state.snow_and_wind[0][0] + st.session_state.snow_and_wind[0][1]) * grid
+                    option_distributed_load = round(option_distributed_load, 2)
+                    new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
+                    st.session_state.distributed_load_array.append(new_distributed_load)
+                    st.session_state.counter_distributed_load += 1
+                    snow_wind = f"""
+                                Schneelast = {st.session_state.snow_and_wind[0][0]}kN/m²
+                                Windlast = {st.session_state.snow_and_wind[0][1]}kN/m²"""
+        with st.expander("Dachaufbau"):
+            with st.container():
+                col1, col2 = st.columns(2)
+                with col1:
+                    dach_aufbau()
+                with col2:
+                    st.image(st.session_state.image_dachaufbau)
+        with st.expander("Schichten Dachaufbau"):
+            # Genauer Dachaufbau
+            if "more_information_roof" not in st.session_state:
+                                st.session_state.more_information_roof = {
+                                    "kein Dachaufbau": 
+                                    """ 
+                                    
+                                    """,
+                                    "extensive Dachbegrünung": 
+                                    f""" 
+                                    extensive Dachbegrünung 10cm = {st.session_state.layer_load_roof['extensive Dachbegrünung 10cm']}kN/m²
+                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²        
+                                    """,
+                                    "intensive Dachbegrünung": 
+                                    f""" 
+                                    intensive Dachbegrünung 20cm = {st.session_state.layer_load_roof['intensive Dachbegrünung 20cm']}kN/m²
+                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
+                                    """,
+                                    "leichter Dachaufbau": 
+                                    f""" 
+                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    Trapezblech = {st.session_state.layer_load_roof['Trapezblech']}kN/m²
+                                    """,
+                                    "schwerer Dachaufbau": 
+                                    f""" 
+                                    Kies 5cm = {st.session_state.layer_load_roof['Kies 5cm']}kN/m²
+                                    zweilagige Dachabdichtung = {st.session_state.layer_load_roof['zweilagige Dachabdichtung']}kN/m²
+                                    Dämmstoff 20cm = {st.session_state.layer_load_roof['Dämmstoff 20cm']}kN/m²
+                                    Dampfsperre = {st.session_state.layer_load_roof['Dampfsperre']}kN/m²
+                                    BSH 4cm = {st.session_state.layer_load_roof['BSH 4cm']}kN/m²
+                                    """,
+                                }
+            st.text(st.session_state.more_information_roof[st.session_state.selected_option])
+        with st.expander("Aufbaulasten"):
+            counter = 1
+            counter_aufbaulasten=f"{counter}a"
+            def build_load(counter_aufbaulasten,counter):
+                    while True:
+                        # Dictionary mit den Werten für Zusätzliche Aufbaulasten
+                        option_values = {
+                            "Photovoltaik": 0.102,
                         }
-                    st.text(st.session_state.more_information_roof[st.session_state.selected_option])
-            with col2:
-                st.image(st.session_state.image_dachaufbau)
-        if st.checkbox("Genaue Lasteingabe"):
+                        # st.selectbox für die Auswahl des Dachaufbaus
+                        st.session_state.selected_option_extra = st.selectbox("Aufbaulasten", list(option_values.keys()), key=counter_aufbaulasten)
+                        st.session_state.selected_option_extra_value = option_values[st.session_state.selected_option_extra]
+                        # Zeigen Sie den ausgewählten Wert neben der Option an
+                        st.write(f"{st.session_state.selected_option_extra} = {st.session_state.selected_option_extra_value} kN/m²")
+                        # Wert des ausgewählten Dachaufbaus
+                        option_distributed_load = st.session_state.selected_option_extra_value * grid
+                        option_distributed_load = round(option_distributed_load, 2)
+                        new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
+                        st.session_state.distributed_load_array.append(new_distributed_load)
+                        st.session_state.counter_distributed_load += 1
+                        counter+=1
+                        counter_aufbaulasten=f"{counter}a"
+                        # Eindeutiger Schlüssel für die Checkbox
+                        if not st.checkbox("weitere Aufbaulasten", key=f"checkbox_{counter_aufbaulasten}"):
+                            break
+            if  st.checkbox("hinzufügen von Aufbaulasten"):
+                build_load(counter_aufbaulasten,counter)
+        with st.expander("zusätzliche Lasten"):
+            st.session_state.forces_array.clear()
+            st.session_state.counter_forces=0
             last_auswahl()
         if st.button("Berechnen"):
             do_calculations_system()
     with col3:
         # Darstellungsbereich
-        st.header("Darstellungsbereich")
+        st.header("Ergebnisse statisches System")
         #Darstellung
+        # Zeichnung des statischen Systems
+        def drawing_system():
+            # Systemlinie
+            startpoint_a = 0
+            endpoint_b = 10
+            middle_of_canvas_y = 5
+            x_values_systemline = np.array([startpoint_a, endpoint_b])
+            y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
+            # Matplotlib-Funktion zum Zeichnen der Linie
+            fig, ax = plt.subplots()
+            ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+            ax.set_title('statisches System')
+            plt.text(startpoint_a+((endpoint_b-startpoint_a)/2), middle_of_canvas_y-0.5, f'{length}m', fontsize=8, color='black', ha='center', va='center')
+            #Auflager
+            #Festlager
+            x_values_fixed_support = np.array([startpoint_a, startpoint_a+0.5, startpoint_a-0.5, startpoint_a])
+            y_values_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
+            ax.plot(x_values_fixed_support, y_values_fixed_support, marker=',', linestyle='-', color='black')
+            plt.text(startpoint_a-1, middle_of_canvas_y-0.5, 'A', fontsize=8, color='black', ha='center', va='center')
+            counter_slashes_fixed = 0
+            while (counter_slashes_fixed<5):
+                x_values_fixed_support_slash = np.array([startpoint_a-0.6+0.2*counter_slashes_fixed, startpoint_a-0.4+0.2*counter_slashes_fixed])
+                y_values_fixed_support_slash = np.array([middle_of_canvas_y-1.3, middle_of_canvas_y-1])
+                ax.plot(x_values_fixed_support_slash, y_values_fixed_support_slash, marker=',', linestyle='-', color='black')
+                counter_slashes_fixed += 1
+            #Lostlager
+            x_values_not_fixed_support = np.array([endpoint_b, endpoint_b+0.5, endpoint_b-0.5, endpoint_b])
+            y_values_not_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
+            ax.plot(x_values_not_fixed_support, y_values_not_fixed_support, marker=',', linestyle='-', color='black')
+            plt.text(endpoint_b+1, middle_of_canvas_y-0.5, 'B', fontsize=8, color='black', ha='center', va='center')
+            x_value_litle_line = np.array([endpoint_b-0.7, endpoint_b+0.7])
+            y_value_litle_line = np.array([middle_of_canvas_y-1.2, middle_of_canvas_y-1.2])
+            ax.plot(x_value_litle_line, y_value_litle_line, marker=',', linestyle='-', color='black')
+            counter_slashes_fixed = 0
+            while (counter_slashes_fixed<5):
+                x_values_not_fixed_support_slash = np.array([endpoint_b-0.6+0.2*counter_slashes_fixed, endpoint_b-0.4+0.2*counter_slashes_fixed])
+                y_values_not_fixed_support_slash = np.array([middle_of_canvas_y-1.5, middle_of_canvas_y-1.2])
+                ax.plot(x_values_not_fixed_support_slash, y_values_not_fixed_support_slash, marker=',', linestyle='-', color='black')
+                counter_slashes_fixed += 1
+            #Streckenlast
+            for arrow_field in st.session_state.distributed_load_array:
+                if arrow_field["distributed_load"] != 0:
+                    length_between_supports = endpoint_b-startpoint_a
+                    x_value_distributed = np.array([startpoint_a, endpoint_b, endpoint_b, startpoint_a])
+                    y_value_distributed = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
+                    ax.plot(x_value_distributed, y_value_distributed, marker=',', linestyle='-', color='black')
+                    length_between_supports = length_between_supports/7
+                    counter_arrows_dist = 0
+                    while counter_arrows_dist<8:
+                        force_location_x = startpoint_a + length_between_supports*counter_arrows_dist
+                        x_value_tip = np.array([force_location_x-0.1,force_location_x,force_location_x+0.1])
+                        y_value_tip = np.array([middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"]])
+                        ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
+                        x_value_stick = np.array([force_location_x, force_location_x])
+                        y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
+                        ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
+                        counter_arrows_dist +=1
+                    plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=8, color='black', ha='left', va='center')       
+            #Punktlast
+            for arrow in st.session_state.forces_array:
+                    force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
+                    x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
+                    y_value_tip = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array)])
+                    ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
+                    x_value_stick = np.array([force_location_x, force_location_x])
+                    y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
+                    ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
+                    plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
+            plt.xlim(-2,12)
+            plt.ylim(-2,12)
+            plt.axis('off')
+            st.pyplot(fig)
+            plt.savefig("image_system.png", dpi=150, format='png')
         drawing_system()
         # Ergebnissausgabe
         st.subheader("Auflagerreaktionen A und B")
@@ -864,8 +884,8 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
     st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
 if "image_profil_list" not in st.session_state:
     st.session_state.image_profil_list = {
-        'Kantholz':'material_profil/Pikto_Kantholz.jpg',
-        'IPE':'material_profil/Pikto_IPE.jpg'
+        'Kantholz':'material_profil/Pikto_Kantholz.png',
+        'IPE':'material_profil/Pikto_IPE.png'
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
@@ -1047,27 +1067,28 @@ export_as_pdf = st.button("PDF erstellen")
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Dimensionierung Einfeldträger</a>'
-
 # Beschriftung der PDF
 titel="Dimensionierung Einfeldträger"
 länge=f"Spannweite = {length}m"
 breite=f"Lasteinzugsbreite = {grid}m"
 dach=st.session_state.more_information_roof[st.session_state.selected_option]
 gewichts_last=f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²"
-
 if export_as_pdf: 
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font('Arial', 'B', 12)
-
     pdf.cell(0, 5, titel, ln=True)
     pdf.set_font('Arial', '', 12)
     pdf.ln(10)
     pdf.cell(60, 5, länge)
     pdf.cell(60, 5, breite, ln=True)
-    pdf.ln(10)
-    pdf.multi_cell(0, 5, dach)
-    pdf.cell(60, 5, gewichts_last, ln=True)
+    if snow_wind_check:
+        pdf.ln(10)
+        pdf.multi_cell(0, 5, snow_wind)
+    if st.session_state.selected_option is not "kein Dachaufbau":
+        pdf.ln(10)
+        pdf.multi_cell(0, 5, dach)
+        pdf.cell(60, 5, gewichts_last, ln=True)
     pdf.ln(10)
     if len(st.session_state.forces_array) !=0:
         pdf.multi_cell(0, 5, "Punktlasten:")
@@ -1100,7 +1121,5 @@ if export_as_pdf:
             pdf.image(variants[1], w=20)
             pdf.multi_cell(0, 5, variants[0])
             pdf.ln(10)
-
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
-
     st.markdown(html, unsafe_allow_html=True)
