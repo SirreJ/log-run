@@ -182,7 +182,6 @@ def dach_aufbau():
     if option_distributed_load ==0 :
         st.session_state.distributed_load_array.pop()
         st.session_state.counter_distributed_load -=1
-        st.write("ich werde ausgeführt")
 #aufnahme der Streckenlasten
 def distributed_load_information(distributed_load, counter_distributed_load):
     counter_distributed_load=st.session_state.counter_distributed_load
@@ -756,7 +755,7 @@ if "data_storage_ipe" not in st.session_state:
     st.session_state.data_storage_ipe = {}
     # Erstellung der Datenbank mit Werten für kanthölzer.
     for rows in st.session_state.ipe_data.iterrows():
-        key = f"{rows[1]['b']}/{rows[1]['h']}"
+        key = f"IPE {int(rows[1]['h']*10)}"
         values = {
             "b": rows[1]['b'],
             "h": rows[1]['h'],
@@ -987,22 +986,22 @@ def next_variant():
                 st.subheader(f"Variante {counter_variant}")
                 material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
                 st.text(f"Profil {counter_variant}")
-                if material_choice == "Kantholz":    
+                if material_choice == "Kantholz":  
+                    key_list = list(st.session_state.data_storage_wood.keys())
                     image_profil_choice = st.session_state.image_profil_list[material_choice]
                     image_profil = Image.open(image_profil_choice)
                     st.session_state.image_profil_safe = image_profil
                     col2.image(image_profil)
-                    cross_section_wood_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="8/16")
-                    if st.button(f"Prüfen {counter_variant}"):
-                        check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
+                    cross_section_wood_input = st.selectbox(f"Querschnitt {counter_variant} (b/h)", key_list)
+                    check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
                 elif material_choice == "IPE":
-                    cross_section_ipe_input = st.text_input(f"Querschnitt {counter_variant} (b/h)", value="10.0/20.0", help="Das IPE Profil muss mit einer Nachkommastelle eingegeben werden.")
+                    key_list = list(st.session_state.data_storage_ipe.keys())
+                    cross_section_ipe_input = st.selectbox(f"Profil {counter_variant}", key_list)
                     image_profil_choice = st.session_state.image_profil_list[material_choice]
                     image_profil = Image.open(image_profil_choice)
                     st.session_state.image_profil_safe = image_profil
                     col2.image(image_profil)
-                    if st.button(f"Prüfen {counter_variant}"):
-                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice)
+                    check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice)
                 # Zähler erhöhen
                 counter_variant += 1
                 # Checkbox für die nächste Variante
@@ -1018,6 +1017,7 @@ with st.container(border=True):
             st.write(st.session_state.wood_data)
         with st.expander("Tabelle IPE"):
             st.write(st.session_state.ipe_data)
+        st.session_state.results_variant.clear()
         if st.checkbox("Variante 1"):
             next_variant()
     with col3:
