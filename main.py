@@ -735,7 +735,8 @@ with st.container(border=True):
         st.subheader("Maximales Moment")
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
-        if len(st.session_state.distributed_load_array)!=0# or len(st.session_state.forces_array)!=0:
+        if len(st.session_state.distributed_load_array)!=0:
+        # or len(st.session_state.forces_array)!=0:
             with st.expander("Normalkraftverlauf"):
                 def draw_normal_force_curve():
                     # Systemlinie
