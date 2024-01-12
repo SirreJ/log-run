@@ -8,7 +8,7 @@ import base64
 
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
 
-st.set_page_config(page_title="Profilberechnung Einfeldträger", page_icon=None, layout='wide')
+st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon=None, layout='wide')
 
 # erstellen eines Links
 def create_link(url,text):
@@ -731,12 +731,94 @@ with st.container(border=True):
         st.subheader("Maximales Moment")
         #Moment ausgeben
         st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
-        with st.expander("Normalkraftverlauf"):
-            st.write("Platzhalter")
-        with st.expander("Querkraftverlauf"):
-            st.write("Platzhalter")
-        with st.expander("Momentenverlauf"):
-            st.write("Platzhalter")       
+        if len(st.session_state.distributed_load_array)!=0 or len(st.session_state.forces_array)!=0:
+            with st.expander("Normalkraftverlauf"):
+                def draw_normal_force_curve():
+                    # Systemlinie
+                    startpoint_a = 0
+                    endpoint_b = length
+                    middle_of_canvas_y = 0
+                    x_values_systemline = np.array([startpoint_a, endpoint_b])
+                    y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
+                    # Matplotlib-Funktion zum Zeichnen der Linie
+                    fig, ax = plt.subplots()
+                    ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+                    st.pyplot(fig)
+                draw_normal_force_curve()
+            with st.expander("Querkraftverlauf"):
+                def draw_transverse_force_curve():
+                    # Systemlinie
+                    startpoint_a = 0
+                    endpoint_b = length
+                    middle_of_canvas_y = 0
+                    x_values_systemline = np.array([startpoint_a, endpoint_b])
+                    y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
+                    # Matplotlib-Funktion zum Zeichnen der Linie
+                    fig, ax = plt.subplots()
+                    ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+                    # Nicht-lineare Funktion (z.B., quadratische Funktion)
+                    def non_linear_function(x):
+                        equation=st.session_state.support_forces[0]['support_force']
+                        if len(st.session_state.distributed_load_array) !=0:
+                            for dist_load in st.session_state.distributed_load_array:
+                                equation+=(-dist_load["distributed_load"]*x)
+                        if len(st.session_state.forces_array) !=0:
+                            # Sortieren der Werte nach ihrer Position
+                            st.session_state.forces_array.sort(key=lambda x: x['position'])
+                            for force in st.session_state.forces_array:
+                                equation+=(-1)
+                            # Sortieren der Werte nach ihrem Index
+                            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+                        return equation
+                    # Punkte der X-Werte
+                    step_size=0.1
+                    array_steps=np.arange(0,length+step_size,step_size)
+                    x_data = np.array(array_steps)
+                    # Feinere Abtastung der x-Werte
+                    x_smooth = np.linspace(x_data.min(), x_data.max(), 100)
+                    # Nicht-lineare y-Werte berechnen
+                    y_smooth = non_linear_function(x_smooth)
+                    # Plot erstellen
+                    ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
+                    st.pyplot(fig)
+                draw_transverse_force_curve()
+            with st.expander("Momentenverlauf"):
+                def draw_moment_curve():
+                    # Systemlinie
+                    startpoint_a = 0
+                    endpoint_b = length
+                    middle_of_canvas_y = 0
+                    x_values_systemline = np.array([startpoint_a, endpoint_b])
+                    y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
+                    # Matplotlib-Funktion zum Zeichnen der Linie
+                    fig, ax = plt.subplots()
+                    ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+                    # Nicht-lineare Funktion (z.B., quadratische Funktion)
+                    def non_linear_function(x):
+                        equation=0
+                        if len(st.session_state.distributed_load_array) !=0:
+                            for dist_load in st.session_state.distributed_load_array:
+                                equation+=(+dist_load["distributed_load"]*(x-length/2)**2)/2-(dist_load["distributed_load"]*length**2)/8
+                        if len(st.session_state.forces_array) !=0:
+                            # Sortieren der Werte nach ihrer Position
+                            st.session_state.forces_array.sort(key=lambda x: x['position'])
+                            for force in st.session_state.forces_array:
+                                equation+=(-1)
+                            # Sortieren der Werte nach ihrem Index
+                            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])                        
+                        return equation
+                    # Punkte der X-Werte
+                    step_size=0.1
+                    array_steps=np.arange(0,length+step_size,step_size)
+                    x_data = np.array(array_steps)
+                    # Feinere Abtastung der x-Werte
+                    x_smooth = np.linspace(x_data.min(), x_data.max(), 100)
+                    # Nicht-lineare y-Werte berechnen
+                    y_smooth = non_linear_function(x_smooth)
+                    # Plot erstellen
+                    ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
+                    st.pyplot(fig)            
+                draw_moment_curve()
 if "wood_data" not in st.session_state:
     st.session_state.wood_data = pd.read_excel('tabellen/Tabelle_Kantholz.xlsx')
 if "data_storage_wood" not in st.session_state:
