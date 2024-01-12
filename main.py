@@ -348,6 +348,9 @@ def do_calculations_system():
         st.session_state.maximum_moment += float(st.session_state.support_forces[support_number]['support_force']) * float(st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"])
         indexCounter = 0
         # Überprüfen, ob das maximale Moment auf der rechten oder linken Hälfte ist und anschließende Berechnung
+        for forces_side in st.session_state.forces_array:
+            if forces_side["side"] == "right":
+                forces_side['position'] = length - forces_side['position']
         while indexCounter < len(st.session_state.forces_array):
             if (
                 st.session_state.forces_array[indexCounter]['side'] == st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side']
@@ -358,9 +361,15 @@ def do_calculations_system():
                 )
                 st.session_state.position = st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['position']
                 indexCounter += 1  # Hochzählen, damit jedes Objekt einzeln abgefragt wird.
+            elif len(st.session_state.forces_array) == 1:
+                st.session_state.position = st.session_state.forces_array[0]['position']
+                indexCounter += 1
             else:
                 indexCounter += 1
         # den rechtsseitigen Punktlasten wieder die richtige Position zuweisen.
+        for side in st.session_state.forces_array:
+            if side["side"] == "right":
+                side["position"]=length -side["position"]
         for forces_side in st.session_state.forces_array:
             if forces_side["side"] == "right":
                 forces_side['position'] = length - forces_side['position']
@@ -497,6 +506,9 @@ def do_calculations_system():
                 * (float(st.session_state.side_and_position_max_momentum[1]) ** 2) / 2
             )
             number_of_content_d += 1
+        for side in st.session_state.forces_array:
+            if side["side"] == "right":
+                side["position"]=length -side["position"]
         if st.session_state.side_and_position_max_momentum[0] == 'right':
             st.session_state.position = length - st.session_state.position 
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
@@ -649,6 +661,7 @@ with st.container(border=True):
             st.session_state.forces_array.clear()
             st.session_state.counter_forces=0
             last_auswahl()
+        st.session_state.side_and_position_max_momentum.clear()
         do_calculations_system()
     with col3:
         # Darstellungsbereich
