@@ -8,7 +8,7 @@ import base64
 
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
 
-st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon=None, layout='wide')
+st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon="logo/logo.png", layout='wide')
 
 # erstellen eines Links
 def create_link(url,text):
@@ -518,8 +518,12 @@ if "layer_load_roof" not in st.session_state:
         "Trapezblech": 0.125
     }
 # Beginn der Benutzeroberfläche
-st.header("Vordimensionierung Einfeldträger")
-st.write("Text zur Erläuterung der Nutzung des Programms und Informationen zu ausgeführten Berechnungen und gegebenenfalls Annahmen zur Berechnung der Profile. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit eier Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
+with st.container():
+    col1, col2 = st.columns([1,3])
+    with col1:
+        st.image("logo/logo_mit_text.png",width=300)
+    with col2:
+        st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems eines Einfeldträgers genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
 # Statisches System
 with st.container(border=True):
     col1, col3 = st.columns(2)
@@ -762,13 +766,16 @@ with st.container(border=True):
                         if len(st.session_state.distributed_load_array) !=0:
                             for dist_load in st.session_state.distributed_load_array:
                                 equation+=(-dist_load["distributed_load"]*x)
-                        if len(st.session_state.forces_array) !=0:
+                       # if len(st.session_state.forces_array) !=0:
                             # Sortieren der Werte nach ihrer Position
-                            st.session_state.forces_array.sort(key=lambda x: x['position'])
-                            for force in st.session_state.forces_array:
-                                equation+=(-1)
+                            #st.session_state.forces_array.sort(key=lambda x: x['position'])
+                            #for force in st.session_state.forces_array:
+                            #    conditions =[x < force["position"]]
+                            #    if (force["counter_forces"]+1)>len(force):
+                            #        conditions.append(x >= force["position"])
+                            #        equation+=(-force["point_load"])
                             # Sortieren der Werte nach ihrem Index
-                            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+                            #st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
                         return equation
                     # Punkte der X-Werte
                     step_size=0.1
@@ -799,13 +806,13 @@ with st.container(border=True):
                         if len(st.session_state.distributed_load_array) !=0:
                             for dist_load in st.session_state.distributed_load_array:
                                 equation+=(+dist_load["distributed_load"]*(x-length/2)**2)/2-(dist_load["distributed_load"]*length**2)/8
-                        if len(st.session_state.forces_array) !=0:
+                        #if len(st.session_state.forces_array) !=0:
                             # Sortieren der Werte nach ihrer Position
-                            st.session_state.forces_array.sort(key=lambda x: x['position'])
-                            for force in st.session_state.forces_array:
-                                equation+=(-1)
+                         #   st.session_state.forces_array.sort(key=lambda x: x['position'])
+                         #   for force in st.session_state.forces_array:
+                         #       equation+=(-1)
                             # Sortieren der Werte nach ihrem Index
-                            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])                        
+                         #   st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])                        
                         return equation
                     # Punkte der X-Werte
                     step_size=0.1
