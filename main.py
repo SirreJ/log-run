@@ -13,6 +13,9 @@ st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon="logo/
 # erstellen eines Links
 def create_link(url,text):
     return '<a href="{}" target="_blank">{}</a>'.format(url, text)
+# check if a number is even
+def is_even(number):
+    return number % 2 == 0
 # Schnee- und Windlast
 if "wind_load" not in st.session_state:
     st.session_state.wind_load = 0
@@ -119,7 +122,7 @@ if "selected_option" not in st.session_state:
     st.session_state.selected_option = 0
 if "selected_option_value" not in st.session_state:
     st.session_state.selected_option_value=0
-# Bild Laden
+# load image
 if "image_length_grid" not in st.session_state:
     image_length_grid = Image.open('dachaufbau/Spannweite_Lasteinzugsbreite.png')
 def image_length_grid_place(length, grid):       
@@ -228,7 +231,7 @@ def last_auswahl():
                 with col1:
                     point_load_input = st.text_input("Punktlast (kN)", key=f"point_load_{counter}")
                 with col2:
-                    position_input = st.text_input("Position (m)", key=f"position_{counter}", help="Die Position ist die Entfernung der Punktlast von Auflager A.")
+                    position_input = st.slider("Position (m)", min_value = 0.0, max_value = length, value = 0.0, step = 0.1, help="Die Position ist die Entfernung der Punktlast von Auflager A.", key=f"position_{counter}")
                     point_load = float(point_load_input) if point_load_input else 0
                     position = float(position_input) if position_input else 0
                     point_load_properties(length, position, point_load, st.session_state.counter_forces)
@@ -257,42 +260,32 @@ if "position" not in st.session_state:
     st.session_state.position = 0
 if "safety_factor" not in st.session_state:
     st.session_state.safety_factor = 1.4
-# Berechnung des statischen Systems
+# calculation of the static system
 def do_calculations_system():
-    #Bestimmung der Auflagerkräfte
+    # support forces
     resulting_forces = 0
     support_force_a_vertical = 0
     support_force_b_vertical = 0
     for distributed in st.session_state.distributed_load_array:
         resulting_forces += distributed["distributed_load"] * length / 2
         support_force_a_vertical += distributed["distributed_load"] * length
-
     point_load_calculation = 0
     for point_load in st.session_state.forces_array:
         point_load_calculation += point_load["point_load"] * (point_load["position"] / length)
         support_force_a_vertical += point_load["point_load"]
-
     support_force_b_vertical = point_load_calculation + resulting_forces
     support_force_a_vertical -= support_force_b_vertical
-
-
-
     support_force_a_vertical = round(support_force_a_vertical, 2)
     support_force_b_vertical = round(support_force_b_vertical, 2)
-
-    # Entfernen der zuvor gespeicherten Auflagerkräfte
+    # deleting support forces
     if st.session_state.support_forces != []:
         st.session_state.support_forces.pop()
         st.session_state.support_forces.pop()
-    
-    # Speichern der Auflagerkräfte zur späteren Verwendung
+    # saving support forces
     st.session_state.support_forces.append({"side": "left", "support_force": support_force_a_vertical})
     st.session_state.support_forces.append({"side": "right", "support_force": support_force_b_vertical})
     st.session_state.maximum_moment_position_in_array = 0
-
-    # Ermittlung des maximalen Moments
-    # Überprüfen, ob das erste if und das zweite if zum gleichen Ergebnis führen, wenn nur ein Moment angegeben ist!
-    # Berechnung wenn für Momente
+    # calculation of the maximum moment
     if len(st.session_state.distributed_load_array) != 0 and len(st.session_state.forces_array) == 0:
         st.session_state.position = 0
         number_of_content_d= 0
@@ -309,70 +302,57 @@ def do_calculations_system():
         st.session_state.position = 0
         st.session_state.maximum_moment = 0
         st.session_state.weight_calculation_option = 2
+        # deciding on which side of the system the forces are located
         for obj in st.session_state.forces_array:
             if obj['position'] > length / 2:
-                # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
                 side = "right"
-                # Füge die neue Eigenschaft zum st.session_state.forces_array hinzu
                 obj['side'] = side
-                # Falls die Länge doch noch gebraucht wird, sollte dieser neue Wert in das Array mit einem neuen Namen aufgenommen werden
-                obj['position'] = length - obj['position']
+                obj['position'] = float(length) - float(obj['position'])
+                obj['position'] = round(obj['position'],2)
             elif obj['position'] <= length / 2:
-                # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
                 side = "left"
-                # Füge die neue Eigenschaft zum st.session_state.forces_array hinzu
                 obj['side'] = side
         maximumSingleMoment = 0
         # Schleife durch jedes Element in st.session_state.forces_array
         for forcAr in st.session_state.forces_array:
             # Berechne das Produkt der aktuellen Objektwerte
             current_product = float(forcAr['point_load']) * float(forcAr['position'])
-            
             # Vergleiche mit dem bisherigen maximalen Produkt
             if current_product > maximumSingleMoment:
                 # Wenn das aktuelle Produkt größer ist, aktualisiere die Werte
                 st.session_state.maximum_moment_position_in_array = forcAr['counter_forces']
                 maximumSingleMoment = current_product
-
         # Herausfinden, welches Auflager zur Schnittberechnung geeignet ist
         # Anpassen, wenn Einfeldträger zu Mehrfeldträger wird
         if st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side'] == "left":
             support_number = 0
         else:
             support_number = 1
-
         st.session_state.max_v = float(st.session_state.support_forces[support_number]['support_force'])
-
         # Berechnung des maximalen Moments im Bauteil
         # Auflager der Seite miteinbeziehen
         st.session_state.maximum_moment += float(st.session_state.support_forces[support_number]['support_force']) * float(st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"])
         indexCounter = 0
         # Überprüfen, ob das maximale Moment auf der rechten oder linken Hälfte ist und anschließende Berechnung
-        for forces_side in st.session_state.forces_array:
-            if forces_side["side"] == "right":
-                forces_side['position'] = length - forces_side['position']
         while indexCounter < len(st.session_state.forces_array):
-            if (
-                st.session_state.forces_array[indexCounter]['side'] == st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side']
-                and st.session_state.forces_array[indexCounter]['position'] < st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['position']
-            ):
-                st.session_state.maximum_moment += -float(st.session_state.forces_array[indexCounter]['point_load']) * (
-                    float(st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['position']) - float(st.session_state.forces_array[indexCounter]['position'])
-                )
-                st.session_state.position = st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['position']
-                indexCounter += 1  # Hochzählen, damit jedes Objekt einzeln abgefragt wird.
-            elif len(st.session_state.forces_array) == 1:
-                st.session_state.position = st.session_state.forces_array[0]['position']
-                indexCounter += 1
+            if (st.session_state.forces_array[indexCounter]['side'] == st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side'] and st.session_state.forces_array[indexCounter]['position'] < st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['position']):
+                st.session_state.maximum_moment += -float(st.session_state.forces_array[indexCounter]['point_load']) * (float(st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['position']) - float(st.session_state.forces_array[indexCounter]['position']))
+                indexCounter += 1  # increase counter so every object will be checked
+                st.write("ich werde ausgeführt")
             else:
                 indexCounter += 1
-        # den rechtsseitigen Punktlasten wieder die richtige Position zuweisen.
-        for side in st.session_state.forces_array:
-            if side["side"] == "right":
-                side["position"]=length -side["position"]
+        # position of the maximum moment
+        if len(st.session_state.forces_array) == 1:
+            st.session_state.position = st.session_state.forces_array[0]['position']
+        else:
+            st.session_state.position = st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"]
+        # giving the right side Pointload the right position
         for forces_side in st.session_state.forces_array:
             if forces_side["side"] == "right":
                 forces_side['position'] = length - forces_side['position']
+        # giving the position of the maximum moment the right location
+        if st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side'] == "right":
+            st.session_state.position = length-st.session_state.position
     elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0:
         st.session_state.weight_calculation_option = 3
         st.session_state.maximum_moment = 0
@@ -545,9 +525,9 @@ with st.container(border=True):
         with st.container():
             col1, col2 = st.columns(2)
             with col1:
-                length_input = st.text_input ("Spannweite (m)", 5, help="Die Spannweite bestimmt die Länge des Trägers.")
+                length_input = st.slider("Spannweite (m)", min_value = 0.1, max_value = 30.0, value = 5.0, step = 0.1, help="Die Spannweite bestimmt die Länge des Trägers.")
                 length = float(length_input)
-                grid_input = st.text_input("Lasteinzugsbreite (m)", 3, help="Die Lasteinzugsbreite wird benötigt um die Last des Dachaufbaus auf den Träger zu bestimmen.")
+                grid_input = st.slider("Lasteinzugsbreite (m)", min_value = 0.1, max_value = 15.0, value = 3.0, step = 0.1, help="Die Lasteinzugsbreite wird benötigt um die Last des Dachaufbaus auf den Träger zu bestimmen.")
                 grid = float(grid_input)
             with col2:
                 image_length_grid_place(length, grid)
@@ -711,17 +691,17 @@ with st.container(border=True):
                 if arrow_field["distributed_load"] != 0:
                     length_between_supports = endpoint_b-startpoint_a
                     x_value_distributed = np.array([startpoint_a, endpoint_b, endpoint_b, startpoint_a])
-                    y_value_distributed = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
+                    y_value_distributed = np.array([middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"]])
                     ax.plot(x_value_distributed, y_value_distributed, marker=',', linestyle='-', color='black')
                     length_between_supports = length_between_supports/7
                     counter_arrows_dist = 0
                     while counter_arrows_dist<8:
                         force_location_x = startpoint_a + length_between_supports*counter_arrows_dist
                         x_value_tip = np.array([force_location_x-0.1,force_location_x,force_location_x+0.1])
-                        y_value_tip = np.array([middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"]])
+                        y_value_tip = np.array([middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"]])
                         ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
                         x_value_stick = np.array([force_location_x, force_location_x])
-                        y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"]])
+                        y_value_stick = np.array([middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"]])
                         ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
                         counter_arrows_dist +=1
                     plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=8, color='black', ha='left', va='center')       
@@ -732,7 +712,7 @@ with st.container(border=True):
                     y_value_tip = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array)])
                     ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
                     x_value_stick = np.array([force_location_x, force_location_x])
-                    y_value_stick = np.array([middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
+                    y_value_stick = np.array([middle_of_canvas_y+0.2+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
                     ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
                     plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
             plt.xlim(-2,12)
@@ -780,16 +760,6 @@ with st.container(border=True):
                         if len(st.session_state.distributed_load_array) !=0:
                             for dist_load in st.session_state.distributed_load_array:
                                 equation+=(-dist_load["distributed_load"]*x)
-                       # if len(st.session_state.forces_array) !=0:
-                            # Sortieren der Werte nach ihrer Position
-                            #st.session_state.forces_array.sort(key=lambda x: x['position'])
-                            #for force in st.session_state.forces_array:
-                            #    conditions =[x < force["position"]]
-                            #    if (force["counter_forces"]+1)>len(force):
-                            #        conditions.append(x >= force["position"])
-                            #        equation+=(-force["point_load"])
-                            # Sortieren der Werte nach ihrem Index
-                            #st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
                         return equation
                     # Punkte der X-Werte
                     step_size=0.1
@@ -844,7 +814,7 @@ if "wood_data" not in st.session_state:
     st.session_state.wood_data = pd.read_excel('tabellen/Tabelle_Kantholz.xlsx')
 if "data_storage_wood" not in st.session_state:
     st.session_state.data_storage_wood = {}
-    # Erstellung der Datenbank mit Werten für kanthölzer.
+    # create datastorage for kanthölzer
     for rows in st.session_state.wood_data.iterrows():
         key = f"{int(rows[1]['b'])}/{int(rows[1]['h'])}"
         values = {
@@ -856,11 +826,13 @@ if "data_storage_wood" not in st.session_state:
             "available_w": rows[1]['W']
         }
         st.session_state.data_storage_wood[key] = values
+        # sorting the values by the area
+        st.session_state.data_storage_wood = dict(sorted(st.session_state.data_storage_wood.items(), key=lambda item: item[1]['availableArea']))
 if "ipe_data" not in st.session_state:
     st.session_state.ipe_data = pd.read_excel('tabellen/Tabelle_IPE.xlsx')
 if "data_storage_ipe" not in st.session_state:
     st.session_state.data_storage_ipe = {}
-    # Erstellung der Datenbank mit Werten für kanthölzer.
+    # create datastorage for kanthölzer.
     for rows in st.session_state.ipe_data.iterrows():
         key = f"IPE {int(rows[1]['h']*10)}"
         values = {
@@ -900,18 +872,19 @@ if "needed_i_traegheitsmoment" not in st.session_state:
     st.session_state.needed_i_traegheitsmoment=0
 if "needed_area" not in st.session_state:
     st.session_state.needed_area=0
-def check_profil_wood(counter_variant, cross_section_wood_input, material_choice):
-    # Entfernen der zuvor gespeicherten Ergebnisse
-    if len(st.session_state.results_variant) > 0 and len(st.session_state.results_variant) > counter_variant:
-        del st.session_state.results_variant[counter_variant-1]
+if "counter_if_all_true" not in st.session_state:
+    st.session_state.counter_if_all_true = 0
+def check_wood(counter_variant, cross_section_wood_input, material_choice):
+    st.session_state.counter_if_all_true=0
     weight = 0
     weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
     safe_weight = 0
     safe_weight += weight
-    # kg in kN umwandeln
+    # convert kg in kN
     weight = weight * length / 100
     st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
     st.session_state.maximum_moment_check = st.session_state.maximum_moment
+    # for each constelation of loads a different weightcalculation
     if st.session_state.weight_calculation_option == 1:
         st.session_state.maximum_moment_check += weight
         st.session_state.safe_maximum_moment_check += weight
@@ -925,44 +898,57 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
     st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
     st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
     st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd[material_choice]
-    results_variant_title = f'''Variante {counter_variant}'''
+    if is_even(counter_variant)==0:
+        results_variant_title = f'''Variante {counter_variant}'''
+    else:
+        results_variant_title = f'''alternative zu Variante {counter_variant-1}'''
     # Zugriff auf Datenbank und Suche nach passendem W.
     st.session_state.needed_i_traegheitsmoment=0
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
     neededw=st.session_state.needed_w
     availablew=st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]
+    # degree of utilization
+    degree_of_utilization_w = round(st.session_state.needed_w / st.session_state.data_storage_wood[cross_section_wood_input]['available_w'] *100, 2)
     if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
         results_variant = f'''
         Das gewählte Profil besteht die Tragfähigkeitsprüfung nicht ✖ 
         erf W > vorh W
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+        η = {degree_of_utilization_w}%
         '''
         result_w=f"${neededw}cm^3 \gt {availablew}cm^3$"
     else:
         results_variant = f'''
-        Tragfähigkeitsprüfung bestanden ✔
+        Tragfähigkeitsprüfung erfüllt ✔
         erf W < vorh W
         {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+        η = {degree_of_utilization_w}%
         '''
+        st.session_state.counter_if_all_true += 1
         result_w=f"${neededw}cm^3 \lt {availablew}cm^3$"
     # Gebrauchstauglichkeitsnachweis
     st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
     st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
     neededi=st.session_state.needed_i_traegheitsmoment
     availablei=st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']
+    # degree of utilization
+    degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'] *100, 2)
     if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
         results_variant += f'''
-        Durchbiegungsnachweis bestanden ✔
+        Durchbiegungsnachweis erfüllt ✔
         erf I < vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        η = {degree_of_utilization_i}%
         '''
+        st.session_state.counter_if_all_true += 1
         result_i=f"${neededi}cm^4 \lt {availablei}cm^4$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
         erf I > vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        η = {degree_of_utilization_i}%
         '''
         result_i=f"${neededi}cm^4 \gt {availablei}cm^4$"     
     # Schubnachweis mit Sicherheitsbeiwert von 1.4
@@ -970,18 +956,23 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
     st.session_state.needed_area = round(st.session_state.needed_area, 2)
     neededa=st.session_state.needed_area
     availablea=st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']
+    # degree of utilization
+    degree_of_utilization_a = round(st.session_state.needed_area / st.session_state.data_storage_wood[cross_section_wood_input]['availableArea'] *100, 2)
     if st.session_state.needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
         results_variant += f'''
-        Schubnachweis bestanden ✔
+        Schubnachweis erfüllt ✔
         erf A < vorh A
         {st.session_state.needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+        η = {degree_of_utilization_a}%
         '''
+        st.session_state.counter_if_all_true += 1
         result_a=f"${neededa}cm^2 \lt {availablea}cm^2$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
         erf A > vorh A
         {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+        η = {degree_of_utilization_a}%
         '''
         result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"    
     w_compare_wood=r"$erf W \leq vorh W$"
@@ -990,10 +981,25 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A \leq vorh A$"
     a_how_wood=r"$erf A = \frac{3 \cdot maxV_{d}}{2 \cdot \tau_{Rd}}$"
-    # Speichern der Ergebnissef"{material_choice} und {cross_section_wood_input}"
+    # saving of results f"{material_choice} und {cross_section_wood_input}"
     result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
-    # Ersetzen der Ergebnisse
-    st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
+    return result_variant_array
+# check the current wood crossection and give a better fitting one
+def check_profil_wood(counter_variant, cross_section_wood_input, material_choice):
+    # result of the input
+    st.session_state.results_variant.insert(counter_variant-1, check_wood(counter_variant, cross_section_wood_input, material_choice))
+    # better result
+    counter_variant += 1
+    st.session_state.counter_if_all_true=0
+    while st.session_state.counter_if_all_true < 3:
+        for try_profil in st.session_state.data_storage_wood:
+            current_variant = 0
+            current_variant = check_wood(counter_variant, try_profil, material_choice)
+            if try_profil == "20/30":
+                return st.write("Es gibt keine passende Variante als Kantholz.")
+            if st.session_state.counter_if_all_true == 3:
+                break
+    st.session_state.results_variant.insert(counter_variant-1, current_variant)
 if "image_profil_list" not in st.session_state:
     st.session_state.image_profil_list = {
         'Kantholz':'material_profil/Pikto_Kantholz.png',
@@ -1001,15 +1007,13 @@ if "image_profil_list" not in st.session_state:
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
-def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
-     # Entfernen der zuvor gespeicherten Ergebnisse
-    if len(st.session_state.results_variant) > 0 and len(st.session_state.results_variant) > counter_variant:
-        del st.session_state.results_variant[counter_variant-1]
+def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
+    st.session_state.counter_if_all_true=0
     weight = 0
     weight = float(st.session_state.data_storage_ipe[cross_section_ipe_input]["weightPerMeterInKG"])
     safe_weight = 0
     safe_weight += weight
-    # kg in kN umwandeln
+    # convert kg in kN
     weight = weight * length / 100
     st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
     st.session_state.maximum_moment_check = st.session_state.maximum_moment
@@ -1026,44 +1030,57 @@ def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
     st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
     st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd[material_choice]
-    results_variant_title = f'''Variante {counter_variant}'''
+    if is_even(counter_variant)==0:
+        results_variant_title = f'''Variante {counter_variant}'''
+    else:
+        results_variant_title = f'''alternative zu Variante {counter_variant-1}'''
     # Zugriff auf Datenbank und Suche nach passendem W.
     st.session_state.needed_i_traegheitsmoment=0
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
     neededw=st.session_state.needed_w
     availablew=st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]
+    # degree of utilization
+    degree_of_utilization_w = round(st.session_state.needed_w / st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']*100, 2)
     if st.session_state.needed_w > st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]:
         results_variant = f'''
         Das gewählte Profil besteht die Tragfähigkeitsprüfung nicht ✖
         erf W > vorh W
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+        η = {degree_of_utilization_w}%
         '''
         result_w=f"${neededw}cm^3 \gt {availablew}cm^3$"
     else:
         results_variant = f'''
-        Tragfähigkeitsprüfung bestanden ✔
+        Tragfähigkeitsprüfung erfüllt ✔
         erf W < vorh W
         {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+        η = {degree_of_utilization_w}%
         '''
+        st.session_state.counter_if_all_true += 1
         result_w=f"${neededw}cm^3 \lt {availablew}cm^3$"
     # Gebrauchstauglichkeitsnachweis
     st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
     st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
     neededi=st.session_state.needed_i_traegheitsmoment
     availablei=st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]
+    # degree of utilization
+    degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'] *100, 2)
     if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
         results_variant += f'''
-        Durchbiegungsnachweis bestanden ✔
+        Durchbiegungsnachweis erfüllt ✔
         erf I < vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        η = {degree_of_utilization_i}%
         '''
+        st.session_state.counter_if_all_true += 1
         result_i=f"${neededi}cm^4 \lt {availablei}cm^4$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
         erf I > vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        η = {degree_of_utilization_i}%
         '''
         result_i=f"${neededi}cm^4 \gt {availablei}cm^4$"
     # Schubnachweis mit Sicherheitsbeiwert von 1.4
@@ -1071,18 +1088,23 @@ def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.needed_area = round(st.session_state.needed_area, 2)
     neededa=st.session_state.needed_area
     availablea=st.session_state.data_storage_ipe[cross_section_ipe_input]["available_area_steg"]
+    # degree of utilization
+    degree_of_utilization_a = round(st.session_state.needed_area / st.session_state.data_storage_ipe[cross_section_ipe_input]['availableArea'] *100, 2)
     if st.session_state.needed_area <= st.session_state.data_storage_ipe[cross_section_ipe_input]["available_area_steg"]:
         results_variant += f'''
-        Schubnachweis bestanden ✔
+        Schubnachweis erfüllt ✔
         erf Asteg < vorh Asteg
         {st.session_state.needed_area}cm² < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
+        η = {degree_of_utilization_a}%
         '''
+        st.session_state.counter_if_all_true += 1
         result_a=f"${neededa}cm^2 \lt {availablea}cm^2$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
         erf Asteg > vorh Asteg
         {st.session_state.needed_area}cm² > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
+        η = {degree_of_utilization_a}%
         '''
         result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"
     # Speichern der Ergebnisse
@@ -1093,40 +1115,55 @@ def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
     a_compare_wood=r"$erf A_{Steg} \leq vorh A_{Steg}$"
     a_how_wood=r"$erf A_{Steg} = \frac{maxV_{d}}{\tau_{Rd}}$"
     result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_ipe_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_ipe_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_ipe[cross_section_ipe_input]["h"], "width":st.session_state.data_storage_ipe[cross_section_ipe_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
-    # Ersetzen der Ergebnisse
-    st.session_state.results_variant.insert(counter_variant-1, result_variant_array)
+    return result_variant_array
+def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
+    # result of the input
+    st.session_state.results_variant.insert(counter_variant-1, check_ipe(counter_variant, cross_section_ipe_input, material_choice))
+    # better result
+    counter_variant += 1
+    st.session_state.counter_if_all_true=0
+    while st.session_state.counter_if_all_true < 3:
+        for try_profil in st.session_state.data_storage_ipe:
+            current_variant = 0
+            current_variant = check_ipe(counter_variant, try_profil, material_choice)
+            if try_profil == "IPE 600":
+                return st.write("Es gibt keine passende Variante als IPE.")
+            if st.session_state.counter_if_all_true == 3:
+                break
+    st.session_state.results_variant.insert(counter_variant-1, current_variant)
 def next_variant():
     counter_variant = 1
-    while True:
-        # Materialauswahl
-            col1, col2 = st.columns(2)
-            with col1:
-                st.subheader(f"Variante {counter_variant}")
-                material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
-                st.text(f"Profil {counter_variant}")
-                if material_choice == "Kantholz":  
-                    key_list = list(st.session_state.data_storage_wood.keys())
-                    image_profil_choice = st.session_state.image_profil_list[material_choice]
-                    image_profil = Image.open(image_profil_choice)
-                    st.session_state.image_profil_safe = image_profil
-                    col2.image(image_profil)
-                    cross_section_wood_input = st.selectbox(f"Querschnitt {counter_variant} (b/h)", key_list)
-                    check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
-                elif material_choice == "IPE":
-                    key_list = list(st.session_state.data_storage_ipe.keys())
-                    cross_section_ipe_input = st.selectbox(f"Profil {counter_variant}", key_list)
-                    image_profil_choice = st.session_state.image_profil_list[material_choice]
-                    image_profil = Image.open(image_profil_choice)
-                    st.session_state.image_profil_safe = image_profil
-                    col2.image(image_profil)
-                    check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice)
-                # Zähler erhöhen
-                counter_variant += 1
-                # Checkbox für die nächste Variante
-                checkbox_label = "weitere Variante ({})".format(counter_variant)
-                if not st.checkbox(checkbox_label, key=f"checkbox_variant{counter_variant}"):
-                    break
-# Überprüfung der Querschnitte
+    if st.session_state.maximum_moment != 0:
+        while True:
+            # materialchoice
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.subheader(f"Variante {counter_variant}")
+                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
+                    st.text(f"Profil {counter_variant}")
+                    if material_choice == "Kantholz":  
+                        key_list = list(st.session_state.data_storage_wood.keys())
+                        image_profil_choice = st.session_state.image_profil_list[material_choice]
+                        image_profil = Image.open(image_profil_choice)
+                        st.session_state.image_profil_safe = image_profil
+                        col2.image(image_profil)
+                        cross_section_wood_input = st.selectbox(f"Querschnitt {counter_variant} (b/h)", key_list)
+                        check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
+                    elif material_choice == "IPE":
+                        key_list = list(st.session_state.data_storage_ipe.keys())
+                        cross_section_ipe_input = st.selectbox(f"Profil {counter_variant}", key_list)
+                        image_profil_choice = st.session_state.image_profil_list[material_choice]
+                        image_profil = Image.open(image_profil_choice)
+                        st.session_state.image_profil_safe = image_profil
+                        col2.image(image_profil)
+                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice)
+                    # increase counter
+                    counter_variant += 2
+                    # checkbox for the next variant
+                    checkbox_label = "weitere Variante ({})".format(counter_variant)
+                    if not st.checkbox(checkbox_label, key=f"checkbox_variant{counter_variant}"):
+                        break
+# checking the crossection
 with st.container(border=True):
     col1, col3 = st.columns(2)
     with col1:
@@ -1140,7 +1177,7 @@ with st.container(border=True):
             next_variant()
     with col3:
         st.header("Ergebnisübersicht")
-        # Ergebnisse der Überprüfung
+        # results of the checking
         for item in st.session_state.results_variant:
             st.subheader(item["title"])
             st.write(item["properties"])
@@ -1187,17 +1224,15 @@ def variant_comparison():
                 st.session_state.image_profil_list[st.session_state.results_variant[i]['profil']]
                 ]
                 st.session_state.variant_comparison_list.append(add_variant_list)
-# Variantenvergleich
-#with st.container(border=True):
-    #st.header("Vergleichsansicht")
+# variant comparison
 with st.expander("Vergleichsansicht"):
     variant_comparison()
-# Ausgabe der Ergebnisse als PDF
+# create the PDF
 export_as_pdf = st.button("PDF erstellen")
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Dimensionierung Einfeldträger</a>'
-# Beschriftung der PDF
+# write the PDF
 titel="Dimensionierung Einfeldträger"
 länge=f"Spannweite = {length}m"
 breite=f"Lasteinzugsbreite = {grid}m"
