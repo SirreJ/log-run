@@ -286,6 +286,7 @@ def do_calculations_system():
     st.session_state.support_forces.append({"side": "right", "support_force": support_force_b_vertical})
     st.session_state.maximum_moment_position_in_array = 0
     # calculation of the maximum moment
+    # only distributed load
     if len(st.session_state.distributed_load_array) != 0 and len(st.session_state.forces_array) == 0:
         st.session_state.position = 0
         number_of_content_d= 0
@@ -298,6 +299,7 @@ def do_calculations_system():
             st.session_state.maximum_moment += st.session_state.distributed_load_array[number_of_content_d]['distributed_load'] * (length**2) / 8
             number_of_content_d += 1
         st.session_state.position = length/2
+    # only pointload
     elif (len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]['distributed_load'] == 0) and len(st.session_state.forces_array) != 0: 
         st.session_state.position = 0
         st.session_state.maximum_moment = 0
@@ -353,6 +355,7 @@ def do_calculations_system():
         # giving the position of the maximum moment the right location
         if st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side'] == "right":
             st.session_state.position = length-st.session_state.position
+    # point and distributed load
     elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0:
         st.session_state.weight_calculation_option = 3
         st.session_state.maximum_moment = 0
@@ -459,7 +462,6 @@ def do_calculations_system():
         st.session_state.side_and_position_max_momentum.append(st.session_state.position)
         support_number = None
         # Herausfinden, welches Auflager zur Schnittberechnung geeignet ist
-        # Anpassen, wenn Einfeldträger zu Mehrfeldträger wird!!!!!!!!!!!!
         if st.session_state.support_forces[0]['side'] == st.session_state.side_and_position_max_momentum[0]:
             support_number = 0
         elif st.session_state.support_forces[1]['side'] == st.session_state.side_and_position_max_momentum[0]:
@@ -480,6 +482,7 @@ def do_calculations_system():
             else:
                 index_counter += 1
         number_of_content_d = 0
+        # adding the distributed load
         while number_of_content_d < len(st.session_state.distributed_load_array):
             st.session_state.maximum_moment = float(st.session_state.maximum_moment) - (
                 float(st.session_state.distributed_load_array[number_of_content_d]['distributed_load'])
@@ -538,14 +541,14 @@ with st.container(border=True):
                     img_url_snow="zonen_karten/schnee_last_zonen.png"
                     st.image(img_url_snow, caption="Schneelastzonen")
                     text = "Hier gelangst du zur Quelle des Bilds."
-                    link_html =create_link(img_url_snow,text)
+                    link_html = create_link(img_url_snow,text)
                     st.markdown(link_html, unsafe_allow_html=True)
                     more_information_snow()
                 with col2:
                     img_url_wind="zonen_karten/deutschland_karte_windzonen.png"
                     st.image(img_url_wind, caption="Windlastzonen")
                     text = "Hier gelangst du zur Quelle des Bilds."
-                    link_html =create_link(img_url_wind,text)
+                    link_html = create_link(img_url_wind,text)
                     st.markdown(link_html, unsafe_allow_html=True)
                     more_information_wind()
             with st.container():
@@ -720,36 +723,88 @@ with st.container(border=True):
             st.pyplot(fig,use_container_width=True)
             plt.savefig("image_system.png", dpi=150, format='png')
         drawing_system()
-        if len(st.session_state.distributed_load_array)!=0:
+        if len(st.session_state.distributed_load_array)!=0 or len(st.session_state.forces_array)!=0:
             with st.container():
+                # only pointload
+                st.session_state.forces_array.sort(key=lambda x: x['position'])
                 def add_condition_transverse_force(calculation, x_value):
+                    counter_list=1
                     equation_list = []
                     equation_list.append(calculation)
                     condition_equation_list = []
                     condition_equation_list.append(x_value<st.session_state.forces_array[0]["position"])
+                    # adding the pointLoads to the right spots
                     for forces_equation in st.session_state.forces_array:
+                        # creating the new equations for the specific range of x
                         new_equation = calculation + forces_equation["point_load"]
                         calculation = new_equation
                         equation_list.append(new_equation)
-                        if (forces_equation["counter_forces"]+1) is not len(st.session_state.forces_array):
-                            new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[forces_equation["counter_forces"]]["position"])
+                        # creating the specific range of x
+                        if counter_list is not len(st.session_state.forces_array):
+                            new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                            counter_list+=1
                         else:
                             new_condition = (forces_equation["position"] <= x_value)
                         condition_equation_list.append(new_condition)
+                    # giving each range the right equation
                     result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
-                    final_equation = np.sum(result_equation, axis=0)
-                    return final_equation
+                    final_equation_transverse = np.sum(result_equation, axis=0)
+                    return final_equation_transverse
+                def add_condition_moment_curve(calculation, x_value):
+                    counter_list=1
+                    calculation += -(st.session_state.support_forces[0]['support_force']*(x_value))
+                    equation_list = []
+                    equation_list.append(calculation)
+                    condition_equation_list = []
+                    condition_equation_list.append(x_value <= st.session_state.forces_array[0]["position"])
+                    # adding the pointLoads to the right spots
+                    for forces_equation_m in st.session_state.forces_array:
+                        # creating the new equations for the specific range of x
+                        new_calculation = calculation + (forces_equation_m["point_load"]*(x_value-forces_equation_m["position"]))
+                        calculation = new_calculation
+                        equation_list.append(new_calculation)
+                        # creating the specific range of x
+                        if counter_list is not len(st.session_state.forces_array):
+                            new_condition = (forces_equation_m["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                            counter_list+=1
+                        else:
+                            new_condition = (forces_equation_m["position"] < x_value)
+                        condition_equation_list.append(new_condition)
+                    # giving each range the right equation
+                    result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                    final_equation_transverse = np.sum(result_equation, axis=0)
+                    return final_equation_transverse
+                def non_linear_function_transverse(x):
+                            equation=-st.session_state.support_forces[0]['support_force']
+                            if len(st.session_state.distributed_load_array) !=0:
+                                for dist_load in st.session_state.distributed_load_array:
+                                    equation += (dist_load["distributed_load"]*x)
+                                final_equation_transverse = equation
+                            if len(st.session_state.forces_array) != 0:
+                                final_equation_transverse = add_condition_transverse_force(equation, x)
+                            return final_equation_transverse
+                def non_linear_function_moment(x):
+                            final_equation=0
+                            if len(st.session_state.distributed_load_array) !=0:
+                                for dist_load in st.session_state.distributed_load_array:
+                                    final_equation -= (dist_load["distributed_load"]*(x)*(length-x))/2
+                                if len(st.session_state.forces_array) != 0: 
+                                    final_equation = (dist_load["distributed_load"]*(x)**2)/2
+                                    final_equation = add_condition_moment_curve(final_equation, x)
+                            if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
+                                    final_equation = add_condition_moment_curve(final_equation, x)
+                            return final_equation
                 col4, col5, col6=st.columns(3)
                 with col4:
                     def draw_normal_force_curve():
-                        # Systemlinie
+                        # systemline
                         startpoint_a = 0
                         endpoint_b = length
                         middle_of_canvas_y = 0
                         x_values_systemline = np.array([startpoint_a, endpoint_b])
                         y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
-                        # Matplotlib-Funktion zum Zeichnen der Linie
                         fig, ax = plt.subplots()
+                        # create plot
                         ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
                         ax.set_title('Normalkraftverlauf')
                         plt.xlim()
@@ -759,7 +814,7 @@ with st.container(border=True):
                     draw_normal_force_curve()
                 with col5:
                     def draw_transverse_force_curve():
-                        # Systemlinie
+                        # systemline
                         startpoint_a = 0
                         endpoint_b = length
                         middle_of_canvas_y = 0
@@ -768,34 +823,25 @@ with st.container(border=True):
                         # Matplotlib-Funktion zum Zeichnen der Linie
                         fig, ax = plt.subplots()
                         ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
-                        # Nicht-lineare Funktion (z.B., quadratische Funktion)
-                        def non_linear_function_transverse(x):
-                            equation=-st.session_state.support_forces[0]['support_force']
-                            if len(st.session_state.distributed_load_array) !=0:
-                                for dist_load in st.session_state.distributed_load_array:
-                                    equation += (dist_load["distributed_load"]*x)
-                            final_equation = equation
-                            if len(st.session_state.forces_array) != 0:
-                                final_equation = add_condition_transverse_force(equation, x)
-                            return final_equation
                         # x-values
-                        step_size=0.1
+                        step_size=0.01
                         array_steps=np.arange(0,length+step_size,step_size)
                         x_data = np.array(array_steps)
                         # x-values small steps
                         x_smooth = np.linspace(x_data.min(), x_data.max(), 100)
                         # y-values
                         y_smooth = non_linear_function_transverse(x_smooth)
+                        # create plot
                         ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
                         ax.set_title('Querkraftverlauf')
                         plt.xlim()
                         plt.ylim()
-                        plt.axis('off')
+                        plt.axis('on')
                         st.pyplot(fig)
                     draw_transverse_force_curve()
                 with col6:
                     def draw_moment_curve():
-                        # Systemlinie
+                        # systemline
                         startpoint_a = 0
                         endpoint_b = length
                         middle_of_canvas_y = 0
@@ -803,37 +849,24 @@ with st.container(border=True):
                         y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
                         # Matplotlib-Funktion zum Zeichnen der Linie
                         fig, ax = plt.subplots()
-                        ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
-                        # Nicht-lineare Funktion (z.B., quadratische Funktion)
-                        def non_linear_function_moment(x):
-                            equation=0
-                            if len(st.session_state.distributed_load_array) !=0:
-                                for dist_load in st.session_state.distributed_load_array:
-                                    equation+=(+dist_load["distributed_load"]*(x-length/2)**2)/2-(dist_load["distributed_load"]*length**2)/8
-                            #if len(st.session_state.forces_array) !=0:
-                                # Sortieren der Werte nach ihrer Position
-                            #   st.session_state.forces_array.sort(key=lambda x: x['position'])
-                            #   for force in st.session_state.forces_array:
-                            #       equation+=(-1)
-                                # Sortieren der Werte nach ihrem Index
-                            #   st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])                        
-                            return equation
+                        ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')                 
                         # Punkte der X-Werte
-                        step_size=0.1
+                        step_size=0.01
                         array_steps=np.arange(0,length+step_size,step_size)
                         x_data = np.array(array_steps)
                         # Feinere Abtastung der x-Werte
                         x_smooth = np.linspace(x_data.min(), x_data.max(), 100)
                         # Nicht-lineare y-Werte berechnen
                         y_smooth = non_linear_function_moment(x_smooth)
-                        # Plot erstellen
+                        # create plot
                         ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
                         ax.set_title('Momentenverlauf')
                         plt.xlim()
                         plt.ylim()
-                        plt.axis('off')
+                        plt.axis('on')
                         st.pyplot(fig)            
                     draw_moment_curve()
+        st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
         # Ergebnissausgabe
         st.subheader("Auflagerreaktionen A und B")
         #st.text(auflagerreaktion)
