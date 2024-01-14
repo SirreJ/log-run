@@ -789,7 +789,8 @@ with st.container(border=True):
                                 for dist_load in st.session_state.distributed_load_array:
                                     final_equation -= (dist_load["distributed_load"]*(x)*(length-x))/2
                                 if len(st.session_state.forces_array) != 0: 
-                                    final_equation = (dist_load["distributed_load"]*(x)**2)/2
+                                    for dist_load in st.session_state.distributed_load_array:
+                                        final_equation += (dist_load["distributed_load"]*(x)**2)/2
                                     final_equation = add_condition_moment_curve(final_equation, x)
                             if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
                                     final_equation = add_condition_moment_curve(final_equation, x)
