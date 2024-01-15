@@ -10,6 +10,7 @@ import base64
 
 st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon="logo/logo.png", layout='wide')
 
+
 # erstellen eines Links
 def create_link(url,text):
     return '<a href="{}" target="_blank">{}</a>'.format(url, text)
@@ -1349,13 +1350,25 @@ if export_as_pdf:
             pdf.set_font('Arial', 'B', 12)
             pdf.cell(60, 5, item["title"], ln=True)
             pdf.set_font('Arial', '', 12)
-            # Wörter zum Entfernen
-            words_to_remove = ['✖', '✔']
-            # Wörter entfernen
             text_to_edit = item["text"]
-            for words in words_to_remove:
-                edited_text = text_to_edit.replace(words, '')
-            pdf.multi_cell(0, 5, edited_text)
+            latin1_encoded = text_to_edit.encode('latin-1', 'replace').decode('latin-1')
+            new_words_to_remove = "?"
+            count = 0
+            # change every second ?
+            edited_text_1 = ""
+            for char in latin1_encoded:
+                if char == new_words_to_remove:
+                    if count % 2 == 1:
+                        edited_text_1 += 'Ausnutzungsgrad'
+                    else:
+                        edited_text_1 += ''
+                    if count==5:
+                        count = 0
+                    else:
+                        count += 1
+                else:
+                    edited_text_1 += char
+            pdf.multi_cell(0, 5, edited_text_1)
             pdf.ln(10)
         for variants in st.session_state.variant_comparison_list:
             pdf.image(variants[1], w=20)
