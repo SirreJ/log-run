@@ -814,6 +814,7 @@ with st.container(border=True):
                         plt.ylim()
                         plt.axis('off')
                         st.pyplot(fig)
+                        plt.savefig("image_normal.png", dpi=150, format='png')
                     draw_normal_force_curve()
                 with col5:
                     def draw_transverse_force_curve():
@@ -841,6 +842,7 @@ with st.container(border=True):
                         plt.ylim()
                         plt.axis('on')
                         st.pyplot(fig)
+                        plt.savefig("image_transverse.png", dpi=150, format='png')
                     draw_transverse_force_curve()
                 with col6:
                     def draw_moment_curve():
@@ -864,10 +866,12 @@ with st.container(border=True):
                         # create plot
                         ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
                         ax.set_title('Momentenverlauf')
+                        yrange = st.session_state.maximum_moment*1.5
                         plt.xlim()
-                        plt.ylim()
+                        plt.ylim(-yrange, yrange)
                         plt.axis('on')
-                        st.pyplot(fig)            
+                        st.pyplot(fig)
+                        plt.savefig("image_moment.png", dpi=150, format='png')            
                     draw_moment_curve()
         st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
         # Ergebnissausgabe
@@ -985,7 +989,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
         '''
-        result_w=f"${neededw}cm^3 \gt {availablew}cm^3$"
+        result_w=f"${neededw}cm^3 > {availablew}cm^3$"
     else:
         results_variant = f'''
         Tragfähigkeitsprüfung erfüllt ✔
@@ -994,7 +998,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         η = {degree_of_utilization_w}%
         '''
         st.session_state.counter_if_all_true += 1
-        result_w=f"${neededw}cm^3 \lt {availablew}cm^3$"
+        result_w=f"${neededw}cm^3 < {availablew}cm^3$"
     # Gebrauchstauglichkeitsnachweis
     st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
     st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
@@ -1010,7 +1014,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         η = {degree_of_utilization_i}%
         '''
         st.session_state.counter_if_all_true += 1
-        result_i=f"${neededi}cm^4 \lt {availablei}cm^4$"
+        result_i=f"${neededi}cm^4 < {availablei}cm^4$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
@@ -1018,7 +1022,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
         η = {degree_of_utilization_i}%
         '''
-        result_i=f"${neededi}cm^4 \gt {availablei}cm^4$"     
+        result_i=f"${neededi}cm^4 > {availablei}cm^4$"     
     # Schubnachweis mit Sicherheitsbeiwert von 1.4
     st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd[material_choice])
     st.session_state.needed_area = round(st.session_state.needed_area, 2)
@@ -1034,7 +1038,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         η = {degree_of_utilization_a}%
         '''
         st.session_state.counter_if_all_true += 1
-        result_a=f"${neededa}cm^2 \lt {availablea}cm^2$"
+        result_a=f"${neededa}cm^2 < {availablea}cm^2$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
@@ -1042,7 +1046,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
         η = {degree_of_utilization_a}%
         '''
-        result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"  
+        result_a=f"${neededa}cm^2 > {availablea}cm^2$"  
     # saving the results  
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
@@ -1118,7 +1122,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
         '''
-        result_w=f"${neededw}cm^3 \gt {availablew}cm^3$"
+        result_w=f"${neededw}cm^3 > {availablew}cm^3$"
     else:
         results_variant = f'''
         Tragfähigkeitsprüfung erfüllt ✔
@@ -1127,7 +1131,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         η = {degree_of_utilization_w}%
         '''
         st.session_state.counter_if_all_true += 1
-        result_w=f"${neededw}cm^3 \lt {availablew}cm^3$"
+        result_w=f"${neededw}cm^3 < {availablew}cm^3$"
     # Gebrauchstauglichkeitsnachweis
     st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
     st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
@@ -1143,7 +1147,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         η = {degree_of_utilization_i}%
         '''
         st.session_state.counter_if_all_true += 1
-        result_i=f"${neededi}cm^4 \lt {availablei}cm^4$"
+        result_i=f"${neededi}cm^4 < {availablei}cm^4$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
@@ -1151,7 +1155,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
         η = {degree_of_utilization_i}%
         '''
-        result_i=f"${neededi}cm^4 \gt {availablei}cm^4$"
+        result_i=f"${neededi}cm^4 > {availablei}cm^4$"
     # Schubnachweis mit Sicherheitsbeiwert von 1.4
     st.session_state.needed_area = (st.session_state.max_v * 1.4) / st.session_state.schub_rd[material_choice]
     st.session_state.needed_area = round(st.session_state.needed_area, 2)
@@ -1167,7 +1171,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         η = {degree_of_utilization_a}%
         '''
         st.session_state.counter_if_all_true += 1
-        result_a=f"${neededa}cm^2 \lt {availablea}cm^2$"
+        result_a=f"${neededa}cm^2 < {availablea}cm^2$"
     else:
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
@@ -1175,7 +1179,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         {st.session_state.needed_area}cm² > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
         η = {degree_of_utilization_a}%
         '''
-        result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"
+        result_a=f"${neededa}cm^2 > {availablea}cm^2$"
     # saving the results
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
@@ -1254,6 +1258,19 @@ with st.container(border=True):
             st.text(item["text"])
 if "variant_comparison_list" not in st.session_state:
     st.session_state.variant_comparison_list=[]
+if "latex_code_pictures" not in st.session_state:
+    st.session_state.latex_code_pictures=[]
+def latex_to_png(latex_code, counter_pictures):
+    # create a picture of LaTeX-Code
+    fig, ax = plt.subplots()
+    ax.text(0.5, 0.5, latex_code, size=12, ha='center', va='center', transform=ax.transAxes)
+    ax.axis('off')
+    output_filename=f"latex_code{counter_pictures}.png"
+    # save the picture as PNG
+    plt.savefig(output_filename, bbox_inches='tight')
+    plt.close()
+    st.session_state.latex_code_pictures.append(output_filename)
+st.session_state.latex_code_pictures.clear()
 def variant_comparison():
         if len(st.session_state.results_variant) != 0:
             # Dynamisch Spalten erstellen
@@ -1261,6 +1278,7 @@ def variant_comparison():
             dynamic_columns = st.columns(num_columns)
             # Füllen der Spalten mit Daten
             st.session_state.variant_comparison_list.clear()
+            counter_pictures=0
             for i, col in enumerate(dynamic_columns):
                 col.subheader(f"Variante {i+1}")
                 col.image(st.session_state.results_variant[i]['image'])
@@ -1281,6 +1299,25 @@ def variant_comparison():
                 col.markdown(st.session_state.results_variant[i]['a_compare'])
                 col.markdown(st.session_state.results_variant[i]['a_how'])
                 col.markdown(st.session_state.results_variant[i]['result_a'])
+                # saving the LaTex-Code as png
+                latex_to_png(st.session_state.results_variant[i]['w_compare'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['w_how'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['result_w'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['i_compare'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['i_how'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['result_i'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['a_compare'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['a_how'], counter_pictures)
+                counter_pictures+=1
+                latex_to_png(st.session_state.results_variant[i]['result_a'], counter_pictures)
+                counter_pictures+=1
                 add_variant_list=[
                 f"""Variante {i+1}
                 Profil: {st.session_state.results_variant[i]['profil_text']}
@@ -1345,6 +1382,8 @@ if export_as_pdf:
     pdf.ln(10)
     pdf.cell(60, 5, f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.", ln=True)
     pdf.ln(10)
+    counter_pictures = 0
+    st.write(st.session_state.latex_code_pictures)
     if st.session_state.results_variant != 0:
         for item in st.session_state.results_variant:
             pdf.set_font('Arial', 'B', 12)
@@ -1374,5 +1413,24 @@ if export_as_pdf:
             pdf.image(variants[1], w=20)
             pdf.multi_cell(0, 5, variants[0])
             pdf.ln(10)
+            pdf.cell(60, 5, "Tragfähigkeit:", ln=True)
+            second_counter=0
+            while second_counter<3:
+                pdf.image(st.session_state.latex_code_pictures[counter_pictures], w=50)
+                counter_pictures += 1
+                second_counter += 1
+            pdf.cell(60, 5, "Durchbiegungsnachweis:", ln=True)
+            second_counter=0
+            while second_counter<3:
+                pdf.image(st.session_state.latex_code_pictures[counter_pictures], w=50)
+                counter_pictures += 1
+                second_counter += 1
+            pdf.cell(60, 5, "Schubnachweis:", ln=True)
+            second_counter=0
+            while second_counter<3:
+                pdf.image(st.session_state.latex_code_pictures[counter_pictures], w=50)
+                counter_pictures += 1
+                second_counter += 1
+
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
     st.markdown(html, unsafe_allow_html=True)
