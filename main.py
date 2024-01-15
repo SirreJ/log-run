@@ -1267,7 +1267,7 @@ def latex_to_png(latex_code, counter_pictures):
     ax.axis('off')
     output_filename=f"latex_code{counter_pictures}.png"
     # save the picture as PNG
-    plt.savefig(output_filename, bbox_inches='tight')
+    plt.savefig(output_filename, dpi=50, bbox_inches='tight')
     plt.close()
     st.session_state.latex_code_pictures.append(output_filename)
 st.session_state.latex_code_pictures.clear()
@@ -1373,6 +1373,20 @@ if export_as_pdf:
             pdf.cell(50, 5, f"q{dist['counter_distributed_load']+1} = {dist['distributed_load']}kN/m", ln=True)
     pdf.ln(10)
     pdf.image("image_system.png", w= 150)
+    second_counter=0
+    current_position_y=pdf.get_y()
+    same_position=current_position_y
+    while second_counter<3:
+        if second_counter is 0:
+            pdf.set_xy(10, current_position_y)
+            pdf.image("image_normal.png", w=50)
+        elif second_counter is 1:
+            pdf.set_xy(70, same_position)
+            pdf.image("image_transverse.png", w=50)
+        elif second_counter is 2:
+            pdf.set_xy(130, same_position)
+            pdf.image("image_moment.png", w=50)
+        second_counter += 1
     pdf.ln(10)
     pdf.cell(60, 5, "Auflagerreaktionen A und B", ln=True)
     pdf.ln(10)
@@ -1383,7 +1397,6 @@ if export_as_pdf:
     pdf.cell(60, 5, f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.", ln=True)
     pdf.ln(10)
     counter_pictures = 0
-    st.write(st.session_state.latex_code_pictures)
     if st.session_state.results_variant != 0:
         for item in st.session_state.results_variant:
             pdf.set_font('Arial', 'B', 12)
@@ -1415,22 +1428,49 @@ if export_as_pdf:
             pdf.ln(10)
             pdf.cell(60, 5, "Tragfähigkeit:", ln=True)
             second_counter=0
+            current_position_y=pdf.get_y()
+            same_position=current_position_y
             while second_counter<3:
+                if second_counter is 0:
+                    pdf.set_xy(10, current_position_y)
+                elif second_counter is 1:
+                    pdf.set_xy(70, same_position)
+                elif second_counter is 2:
+                    pdf.set_xy(130, same_position)
                 pdf.image(st.session_state.latex_code_pictures[counter_pictures], w=50)
                 counter_pictures += 1
                 second_counter += 1
+            pdf.ln(10)
             pdf.cell(60, 5, "Durchbiegungsnachweis:", ln=True)
             second_counter=0
+            current_position_y=pdf.get_y()
+            same_position=current_position_y
             while second_counter<3:
+                if second_counter is 0:
+                    pdf.set_xy(10, current_position_y)
+                elif second_counter is 1:
+                    pdf.set_xy(70, same_position)
+                elif second_counter is 2:
+                    pdf.set_xy(130, same_position)
                 pdf.image(st.session_state.latex_code_pictures[counter_pictures], w=50)
                 counter_pictures += 1
                 second_counter += 1
+            pdf.ln(10)
             pdf.cell(60, 5, "Schubnachweis:", ln=True)
             second_counter=0
+            current_position_y=pdf.get_y()
+            same_position=current_position_y
             while second_counter<3:
+                if second_counter is 0:
+                    pdf.set_xy(10, current_position_y)
+                elif second_counter is 1:
+                    pdf.set_xy(70, same_position)
+                elif second_counter is 2:
+                    pdf.set_xy(130, same_position)
                 pdf.image(st.session_state.latex_code_pictures[counter_pictures], w=50)
                 counter_pictures += 1
                 second_counter += 1
+            pdf.ln(10)
 
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
     st.markdown(html, unsafe_allow_html=True)
