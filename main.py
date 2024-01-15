@@ -940,6 +940,7 @@ if "needed_area" not in st.session_state:
     st.session_state.needed_area=0
 if "counter_if_all_true" not in st.session_state:
     st.session_state.counter_if_all_true = 0
+# checking the profil
 def check_wood(counter_variant, cross_section_wood_input, material_choice):
     st.session_state.counter_if_all_true=0
     weight = 0
@@ -1040,17 +1041,17 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
         η = {degree_of_utilization_a}%
         '''
-        result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"    
+        result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"  
+    # saving the results  
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
     i_compare_wood=r"$erf I \leq vorh I$"
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A \leq vorh A$"
     a_how_wood=r"$erf A = \frac{3 \cdot maxV_{d}}{2 \cdot \tau_{Rd}}$"
-    # saving of results f"{material_choice} und {cross_section_wood_input}"
     result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
     return result_variant_array
-# check the current wood crossection and give a better fitting one
+# checking the profil and giving an alternativ solution
 def check_profil_wood(counter_variant, cross_section_wood_input, material_choice):
     # result of the input
     st.session_state.results_variant.insert(counter_variant-1, check_wood(counter_variant, cross_section_wood_input, material_choice))
@@ -1061,7 +1062,7 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
         for try_profil in st.session_state.data_storage_wood:
             current_variant = 0
             current_variant = check_wood(counter_variant, try_profil, material_choice)
-            if try_profil == "20/30":
+            if try_profil == "20/30" and st.session_state.counter_if_all_true != 3:
                 return st.write("Es gibt keine passende Variante als Kantholz.")
             if st.session_state.counter_if_all_true == 3:
                 break
@@ -1073,6 +1074,7 @@ if "image_profil_list" not in st.session_state:
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
+# checking the profil
 def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.counter_if_all_true=0
     weight = 0
@@ -1173,7 +1175,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         η = {degree_of_utilization_a}%
         '''
         result_a=f"${neededa}cm^2 \gt {availablea}cm^2$"
-    # Speichern der Ergebnisse
+    # saving the results
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
     i_compare_wood=r"$erf I \leq vorh I$"
@@ -1182,6 +1184,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     a_how_wood=r"$erf A_{Steg} = \frac{maxV_{d}}{\tau_{Rd}}$"
     result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_ipe_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_ipe_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_ipe[cross_section_ipe_input]["h"], "width":st.session_state.data_storage_ipe[cross_section_ipe_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
     return result_variant_array
+# checking the profil and giving an alternativ solution
 def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
     # result of the input
     st.session_state.results_variant.insert(counter_variant-1, check_ipe(counter_variant, cross_section_ipe_input, material_choice))
@@ -1192,7 +1195,7 @@ def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
         for try_profil in st.session_state.data_storage_ipe:
             current_variant = 0
             current_variant = check_ipe(counter_variant, try_profil, material_choice)
-            if try_profil == "IPE 600":
+            if try_profil == "IPE 600" and st.session_state.counter_if_all_true != 3:
                 return st.write("Es gibt keine passende Variante als IPE.")
             if st.session_state.counter_if_all_true == 3:
                 break
