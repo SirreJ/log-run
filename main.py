@@ -941,6 +941,11 @@ if "schub_rd" not in st.session_state:
         "IPE": 12.6,
         "Kantholz": 0.12
     }
+if "e_modul" not in st.session_state:
+    st.session_state.e_modul = {
+        "IPE": 21000,
+        "Kantholz": 1100
+    }
 if "maximum_moment_check" not in st.session_state:
     st.session_state.maximum_moment_check = 0
 if "results_variant" not in st.session_state:
@@ -1014,11 +1019,17 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     availablei=st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']
     # degree of utilization
     degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'] *100, 2)
+    deflection = (5*st.session_state.maximum_moment*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'])
+    available_deflection =length/300
+    deflection = round(deflection,3)
+    available_deflection = round(available_deflection,3)
     if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
         results_variant += f'''
         Durchbiegungsnachweis erfüllt ✔
         erf I < vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        erf Durchbiegung < l/300
+        {deflection}cm < {available_deflection}cm
         η = {degree_of_utilization_i}%
         '''
         st.session_state.counter_if_all_true += 1
@@ -1028,6 +1039,8 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
         erf I > vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        erf Durchbiegung > l/300
+        {deflection}cm > {available_deflection}cm
         η = {degree_of_utilization_i}%
         '''
         result_i=f"${neededi}cm^4 > {availablei}cm^4$"     
@@ -1147,11 +1160,17 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     availablei=st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]
     # degree of utilization
     degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'] *100, 2)
+    deflection = (5*st.session_state.maximum_moment*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'])
+    available_deflection =length/300
+    deflection = round(deflection,3)
+    available_deflection = round(available_deflection,3)
     if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
         results_variant += f'''
         Durchbiegungsnachweis erfüllt ✔
         erf I < vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        erf Durchbiegung < l/300
+        {deflection}cm < {available_deflection}cm
         η = {degree_of_utilization_i}%
         '''
         st.session_state.counter_if_all_true += 1
@@ -1161,6 +1180,8 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
         erf I > vorh I
         {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        erf Durchbiegung > l/300
+        {deflection}cm > {available_deflection}cm
         η = {degree_of_utilization_i}%
         '''
         result_i=f"${neededi}cm^4 > {availablei}cm^4$"
