@@ -513,24 +513,26 @@ if "layer_load_roof" not in st.session_state:
         "Dämmstoff 20cm": 0.8,
         "Trapezblech": 0.125
     }
-# Beginn der Benutzeroberfläche
+# beginning of the user interface
 with st.container():
     col1, col2 = st.columns([1,3])
     with col1:
         st.image("logo/logo_mit_text.png",width=300)
     with col2:
         st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems eines Einfeldträgers genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
-# Statisches System
+# static system
 with st.container(border=True):
     col1, col3 = st.columns(2)
     with col1:
-        # Eingaben für das statische System
+        # input for the static system
         st.header("Eingabe für das statische System")
         with st.container():
             col1, col2 = st.columns(2)
             with col1:
                 length_input = st.slider("Spannweite (m)", min_value = 0.1, max_value = 30.0, value = 5.0, step = 0.1, help="Die Spannweite bestimmt die Länge des Trägers.")
                 length = float(length_input)
+                #position_b_input = st.slider("Spannweite (m)", min_value = 0.1, max_value = 30.0, value = length, step = 0.1, help="Die Anpassung dieser Länge wird zum erzeugen eines Kragarms verwendet.")
+                #position_b = float(position_b_input)
                 grid_input = st.slider("Lasteinzugsbreite (m)", min_value = 0.1, max_value = 15.0, value = 3.0, step = 0.1, help="Die Lasteinzugsbreite wird benötigt um die Last des Dachaufbaus auf den Träger zu bestimmen.")
                 grid = float(grid_input)
             with col2:
@@ -574,7 +576,7 @@ with st.container(border=True):
                 with col2:
                     st.image(st.session_state.image_dachaufbau)
         with st.expander("Schichten Dachaufbau"):
-            # Genauer Dachaufbau
+            # exact roof structure
             if "more_information_roof" not in st.session_state:
                                 st.session_state.more_information_roof = {
                                     "kein Dachaufbau": 
@@ -615,13 +617,18 @@ with st.container(border=True):
                                 }
             st.text(st.session_state.more_information_roof[st.session_state.selected_option])
         with st.expander("Aufbaulasten"):
+            # additional_roof_structures
             counter = 1
             counter_aufbaulasten=f"{counter}a"
+            if "additional_roof_structures" not in st.session_state:
+                st.session_state.additional_roof_structures=[]
+            st.session_state.additional_roof_structures.clear()
             def build_load(counter_aufbaulasten,counter):
                     while True:
                         # Dictionary mit den Werten für Zusätzliche Aufbaulasten
                         option_values = {
                             "Photovoltaik": 0.102,
+                            "Solarthermie":0.167,
                         }
                         # st.selectbox für die Auswahl des Dachaufbaus
                         st.session_state.selected_option_extra = st.selectbox("Aufbaulasten", list(option_values.keys()), key=counter_aufbaulasten)
@@ -629,6 +636,7 @@ with st.container(border=True):
                         # Zeigen Sie den ausgewählten Wert neben der Option an
                         st.write(f"{st.session_state.selected_option_extra} = {st.session_state.selected_option_extra_value} kN/m²")
                         # Wert des ausgewählten Dachaufbaus
+                        st.session_state.additional_roof_structures.append(f"{st.session_state.selected_option_extra} = {st.session_state.selected_option_extra_value} kN/m²")
                         option_distributed_load = st.session_state.selected_option_extra_value * grid
                         option_distributed_load = round(option_distributed_load, 2)
                         new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
@@ -636,7 +644,7 @@ with st.container(border=True):
                         st.session_state.counter_distributed_load += 1
                         counter+=1
                         counter_aufbaulasten=f"{counter}a"
-                        # Eindeutiger Schlüssel für die Checkbox
+                        # unique key for the checkbox
                         if not st.checkbox("weitere Aufbaulasten", key=f"checkbox_{counter_aufbaulasten}"):
                             break
             if  st.checkbox("hinzufügen von Aufbaulasten"):
@@ -1362,6 +1370,10 @@ if export_as_pdf:
         pdf.multi_cell(0, 5, dach)
         pdf.cell(60, 5, gewichts_last, ln=True)
         pdf.image(st.session_state.image_dachaufbau_auswahl, x=10,y=pdf.get_y() -40, w= 30)
+    if len(st.session_state.additional_roof_structures) is not 0:
+        pdf.ln(10)
+        for additional in st.session_state.additional_roof_structures:
+            pdf.cell(0, 5, additional,ln=True)
     if len(st.session_state.forces_array) !=0:
         pdf.multi_cell(0, 5, "Punktlasten:")
         for point in st.session_state.forces_array:
@@ -1373,6 +1385,12 @@ if export_as_pdf:
             pdf.cell(50, 5, f"q{dist['counter_distributed_load']+1} = {dist['distributed_load']}kN/m", ln=True)
     pdf.ln(10)
     pdf.image("image_system.png", w= 150)
+    # checking if there is enough space for the pictures
+    max_y = pdf.h
+    current_position_y = pdf.get_y()
+    remaining_space = max_y - current_position_y
+    if remaining_space < 60:
+        pdf.add_page()
     second_counter=0
     current_position_y=pdf.get_y()
     same_position=current_position_y
@@ -1427,6 +1445,11 @@ if export_as_pdf:
             pdf.multi_cell(0, 5, variants[0])
             pdf.ln(10)
             pdf.cell(60, 5, "Tragfähigkeit:", ln=True)
+            max_y = pdf.h
+            current_position_y = pdf.get_y()
+            remaining_space = max_y - current_position_y
+            if remaining_space < 60:
+                pdf.add_page()
             second_counter=0
             current_position_y=pdf.get_y()
             same_position=current_position_y
@@ -1442,6 +1465,11 @@ if export_as_pdf:
                 second_counter += 1
             pdf.ln(10)
             pdf.cell(60, 5, "Durchbiegungsnachweis:", ln=True)
+            max_y = pdf.h
+            current_position_y = pdf.get_y()
+            remaining_space = max_y - current_position_y
+            if remaining_space < 60:
+                pdf.add_page()
             second_counter=0
             current_position_y=pdf.get_y()
             same_position=current_position_y
@@ -1457,6 +1485,11 @@ if export_as_pdf:
                 second_counter += 1
             pdf.ln(10)
             pdf.cell(60, 5, "Schubnachweis:", ln=True)
+            max_y = pdf.h
+            current_position_y = pdf.get_y()
+            remaining_space = max_y - current_position_y
+            if remaining_space < 60:
+                pdf.add_page()
             second_counter=0
             current_position_y=pdf.get_y()
             same_position=current_position_y
