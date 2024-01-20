@@ -3,16 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import base64
-
 from PIL import Image, ImageDraw, ImageFont
 from fpdf import FPDF
-
-
-
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
-
 st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon="logo/logo.png", layout='wide')
-
 # creating a link
 def create_link(url,text):
     return '<a href="{}" target="_blank">{}</a>'.format(url, text)
@@ -1294,9 +1288,27 @@ if "data_storage_ipe" not in st.session_state:
             "available_area_steg":rows[1]['Asteg']
         }
         st.session_state.data_storage_ipe[key] = values
+if "ipb_data" not in st.session_state:
+    st.session_state.ipb_data = pd.read_excel('tabellen/Tabelle_IPB_HE_B.xlsx')
+if "data_storage_ipb" not in st.session_state:
+    st.session_state.data_storage_ipb = {}
+    # create datastorage for kanthölzer.
+    for rows in st.session_state.ipe_data.iterrows():
+        key = f"IPB {int(rows[1]['h']*10)}"
+        values = {
+            "b": rows[1]['b'],
+            "h": rows[1]['h'],
+            "availableArea": rows[1]['A'],
+            "weightPerMeterInKG": rows[1]['G'],
+            "availableITrägheitsmoment": int(rows[1]['I']),
+            "available_w": rows[1]['W'],
+            "available_area_steg":rows[1]['Asteg']
+        }
+        st.session_state.data_storage_ipb[key] = values
 if "tension_rd" not in st.session_state: 
     st.session_state.tension_rd = {
         "IPE": 21.8,
+        "IPB": 21.8,
         "Kantholz": 1.5
     }
 if "needed_w" not in st.session_state: 
@@ -1304,16 +1316,19 @@ if "needed_w" not in st.session_state:
 if "number_k0" not in st.session_state:
     st.session_state.number_k0 = {
         "IPE": 15,
+        "IPB": 15,
         "Kantholz": 312
     }
 if "schub_rd" not in st.session_state:
     st.session_state.schub_rd = {
         "IPE": 12.6,
+        "IPB": 12.6,
         "Kantholz": 0.12
     }
 if "e_modul" not in st.session_state:
     st.session_state.e_modul = {
         "IPE": 21000,
+        "IPB": 21000,
         "Kantholz": 1100
     }
 if "maximum_moment_check" not in st.session_state:
@@ -1481,15 +1496,17 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
 if "image_profil_list" not in st.session_state:
     st.session_state.image_profil_list = {
         'Kantholz':'material_profil/Pikto_Kantholz.png',
-        'IPE':'material_profil/Pikto_IPE.png'
+        'IPE':'material_profil/Pikto_IPE.png',
+        'IPB':'material_profil/Pikto_IPE.png'
+
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
 # checking the profil
-def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
+def check_ipe(counter_variant, cross_section_input, material_choice, data_storage):
     st.session_state.counter_if_all_true=0
     weight = 0
-    weight = float(st.session_state.data_storage_ipe[cross_section_ipe_input]["weightPerMeterInKG"])
+    weight = float(data_storage[cross_section_input]["weightPerMeterInKG"])
     safe_weight = 0
     safe_weight += weight*length
     # convert kg in kN
@@ -1532,14 +1549,14 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
     neededw=st.session_state.needed_w
-    availablew=st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]
+    availablew=data_storage[cross_section_input]["available_w"]
     # degree of utilization
-    degree_of_utilization_w = round(st.session_state.needed_w / st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']*100, 2)
-    if st.session_state.needed_w > st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]:
+    degree_of_utilization_w = round(st.session_state.needed_w / data_storage[cross_section_input]['available_w']*100, 2)
+    if st.session_state.needed_w > data_storage[cross_section_input]["available_w"]:
         results_variant = f'''
         Neuen Querschnitt wählen aufgrund des Tragfähigkeitsnachweises ✖
         erf W > vorh W
-        {st.session_state.needed_w}cm³ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+        {st.session_state.needed_w}cm³ > {data_storage[cross_section_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
         '''
         result_w=f"${neededw}cm^3 > {availablew}cm^3$"
@@ -1547,7 +1564,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         results_variant = f'''
         Tragfähigkeitsnachweis erfüllt ✔
         erf W < vorh W
-        {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
+        {st.session_state.needed_w}cm³ < {data_storage[cross_section_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
         '''
         st.session_state.counter_if_all_true += 1
@@ -1556,18 +1573,18 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
     st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
     neededi=st.session_state.needed_i_traegheitsmoment
-    availablei=st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]
+    availablei=data_storage[cross_section_input]["availableITrägheitsmoment"]
     # degree of utilization
-    degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'] *100, 2)
-    deflection = (5*(st.session_state.safe_maximum_moment_check*100)*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'])
+    degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / data_storage[cross_section_input]['availableITrägheitsmoment'] *100, 2)
+    deflection = (5*(st.session_state.safe_maximum_moment_check*100)*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*data_storage[cross_section_input]['availableITrägheitsmoment'])
     available_deflection = (length*100)/300
     deflection = round(deflection,2)
     available_deflection = round(available_deflection,2)
-    if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
+    if st.session_state.needed_i_traegheitsmoment <= data_storage[cross_section_input]["availableITrägheitsmoment"]:
         results_variant += f'''
         Durchbiegungsnachweis erfüllt ✔
         erf I < vorh I
-        {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        {st.session_state.needed_i_traegheitsmoment}cm^4 < {data_storage[cross_section_input]['availableITrägheitsmoment']}cm^4
         erf Durchbiegung < l/300
         {deflection}cm < {available_deflection}cm
         η = {degree_of_utilization_i}%
@@ -1578,7 +1595,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
         erf I > vorh I
-        {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment']}cm^4
+        {st.session_state.needed_i_traegheitsmoment}cm^4 > {data_storage[cross_section_input]['availableITrägheitsmoment']}cm^4
         erf Durchbiegung > l/300
         {deflection}cm > {available_deflection}cm
         η = {degree_of_utilization_i}%
@@ -1588,14 +1605,14 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     st.session_state.needed_area = (st.session_state.max_v * 1.4) / st.session_state.schub_rd[material_choice]
     st.session_state.needed_area = round(st.session_state.needed_area, 2)
     neededa=st.session_state.needed_area
-    availablea=st.session_state.data_storage_ipe[cross_section_ipe_input]["available_area_steg"]
+    availablea=data_storage[cross_section_input]["available_area_steg"]
     # degree of utilization
-    degree_of_utilization_a = round(st.session_state.needed_area / st.session_state.data_storage_ipe[cross_section_ipe_input]['availableArea'] *100, 2)
-    if st.session_state.needed_area <= st.session_state.data_storage_ipe[cross_section_ipe_input]["available_area_steg"]:
+    degree_of_utilization_a = round(st.session_state.needed_area / data_storage[cross_section_input]['availableArea'] *100, 2)
+    if st.session_state.needed_area <= data_storage[cross_section_input]["available_area_steg"]:
         results_variant += f'''
         Schubnachweis erfüllt ✔
         erf Asteg < vorh Asteg
-        {st.session_state.needed_area}cm² < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
+        {st.session_state.needed_area}cm² < {data_storage[cross_section_input]['available_area_steg']}cm²
         η = {degree_of_utilization_a}%
         '''
         st.session_state.counter_if_all_true += 1
@@ -1604,7 +1621,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
         erf Asteg > vorh Asteg
-        {st.session_state.needed_area}cm² > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_area_steg']}cm²
+        {st.session_state.needed_area}cm² > {data_storage[cross_section_input]['available_area_steg']}cm²
         η = {degree_of_utilization_a}%
         '''
         result_a=f"${neededa}cm^2 > {availablea}cm^2$"
@@ -1615,21 +1632,23 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A_{Steg} \leq vorh A_{Steg}$"
     a_how_wood=r"$erf A_{Steg} = \frac{maxV_{d}}{\tau_{Rd}}$"
-    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_ipe_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_ipe_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_ipe[cross_section_ipe_input]["h"], "width":st.session_state.data_storage_ipe[cross_section_ipe_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
+    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": data_storage[cross_section_input]["h"], "width":data_storage[cross_section_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
     return result_variant_array
 # checking the profil and giving an alternativ solution
-def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
+def check_profil_ipe(counter_variant, cross_section_input, material_choice, data_storage):
     # result of the input
-    st.session_state.results_variant.insert(counter_variant-1, check_ipe(counter_variant, cross_section_ipe_input, material_choice))
+    st.session_state.results_variant.insert(counter_variant-1, check_ipe(counter_variant, cross_section_input, material_choice, data_storage))
     # better result
     counter_variant += 1
     st.session_state.counter_if_all_true=0
     while st.session_state.counter_if_all_true < 3:
-        for try_profil in st.session_state.data_storage_ipe:
+        for try_profil in data_storage:
             current_variant = 0
-            current_variant = check_ipe(counter_variant, try_profil, material_choice)
+            current_variant = check_ipe(counter_variant, try_profil, material_choice, data_storage)
             if try_profil == "IPE 600" and st.session_state.counter_if_all_true != 3:
                 return st.write("Es gibt keine passende Variante als IPE!")
+            if try_profil == "IPB 1000" and st.session_state.counter_if_all_true != 3:
+                return st.write("Es gibt keine passende Variante als IPB!")
             if st.session_state.counter_if_all_true == 3:
                 break
     st.session_state.results_variant.insert(counter_variant-1, current_variant)
@@ -1641,7 +1660,7 @@ def next_variant():
                 col1, col2 = st.columns(2)
                 with col1:
                     st.subheader(f"Variante {counter_variant}")
-                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE"])
+                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE", "IPB"])
                     st.text(f"Profil {counter_variant}")
                     if material_choice == "Kantholz":  
                         key_list = list(st.session_state.data_storage_wood.keys())
@@ -1658,7 +1677,15 @@ def next_variant():
                         image_profil = Image.open(image_profil_choice)
                         st.session_state.image_profil_safe = image_profil
                         col2.image(image_profil)
-                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice)
+                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice, st.session_state.data_storage_ipe)
+                    elif material_choice == "IPB":
+                        key_list = list(st.session_state.data_storage_ipb.keys())
+                        cross_section_ipe_input = st.selectbox(f"Profil {counter_variant}", key_list)
+                        image_profil_choice = st.session_state.image_profil_list[material_choice]
+                        image_profil = Image.open(image_profil_choice)
+                        st.session_state.image_profil_safe = image_profil
+                        col2.image(image_profil)
+                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice, st.session_state.data_storage_ipb)
                     # increase counter
                     counter_variant += 2
                     # checkbox for the next variant
@@ -1674,6 +1701,8 @@ with st.container(border=True):
             st.write(st.session_state.wood_data)
         with st.expander("Tabelle IPE"):
             st.write(st.session_state.ipe_data)
+        with st.expander("Tabelle IPB"):
+            st.write(st.session_state.ipb_data)
         st.session_state.results_variant.clear()
         if st.checkbox("Variante 1"):
             next_variant()
@@ -1812,7 +1841,7 @@ if export_as_pdf:
     max_y = pdf.h
     current_position_y = pdf.get_y()
     remaining_space = max_y - current_position_y
-    if remaining_space < 60:
+    if remaining_space < 80:
         pdf.add_page()
     second_counter=0
     current_position_y=pdf.get_y()
