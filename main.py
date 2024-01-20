@@ -481,7 +481,7 @@ def do_calculations_system():
                         index_counter_position += 1
         # Sortieren der Werte nach ihrem Index
         st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
-        st.session_state.position = round(st.session_state.position, 2)  # Rundet auf zwei Dezimalstellen
+        st.session_state.position = round(st.session_state.position, 2) 
         st.session_state.side_and_position_max_momentum.append(st.session_state.position)
         support_number = None
         # Herausfinden, welches Auflager zur Schnittberechnung geeignet ist
@@ -619,6 +619,7 @@ def do_calculations_system():
         if len(st.session_state.distributed_load_array):
             maximum_moment_kragarm = maximum_moment_kragarm - (distributed_load_force*position_b**2)/2
         st.session_state.maximum_moment_kragarm = maximum_moment_kragarm
+    st.session_state.position = round(st.session_state.position, 2)
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
     st.session_state.maximum_moment_kragarm = round(st.session_state.maximum_moment_kragarm, 2)
     st.session_state.safe_maximum_moment = 0
@@ -1144,12 +1145,10 @@ with st.container(border=True):
                     def non_linear_function_moment(x):
                                 final_equation=0
                                 final_equation = -(st.session_state.support_forces[0]['support_force']*x)
-                                if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) !=0:
+                                if len(st.session_state.distributed_load_array) !=0:
                                     for dist_load in st.session_state.distributed_load_array:
                                         final_equation += (dist_load["distributed_load"]*(x)**2)/2
-                                    if len(st.session_state.forces_array) != 0: 
-                                        final_equation = add_condition_moment_curve(final_equation, x)
-                                elif len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
+                                if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
                                         final_equation = add_condition_moment_curve(final_equation, x)
                                 elif len(st.session_state.forces_array) == 0 and len(st.session_state.distributed_load_array) !=0:
                                     calculation = final_equation
