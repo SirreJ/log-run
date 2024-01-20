@@ -261,21 +261,45 @@ if "position" not in st.session_state:
     st.session_state.position = 0
 if "safety_factor" not in st.session_state:
     st.session_state.safety_factor = 1.4
-# calculation of the static system
-def do_calculations_system():
+if "maximum_moment_kragarm" not in st.session_state:
+    st.session_state.maximum_moment_kragarm = 0
+if "safe_maximum_moment_kragarm" not in st.session_state:
+    st.session_state.safe_maximum_moment_kragarm = 0
+# calculation of the support forces
+def calculate_support_forces():
     # support forces
     resulting_forces = 0
     support_force_a_vertical = 0
     support_force_b_vertical = 0
-    for distributed in st.session_state.distributed_load_array:
-        resulting_forces += distributed["distributed_load"] * length / 2
-        support_force_a_vertical += distributed["distributed_load"] * length
+    resulting_forces_all=0
+    resulting_forces_left=0
+    resulting_forces_right=0
     point_load_calculation = 0
-    for point_load in st.session_state.forces_array:
-        point_load_calculation += point_load["point_load"] * (point_load["position"] / length)
-        support_force_a_vertical += point_load["point_load"]
-    support_force_b_vertical = point_load_calculation + resulting_forces
-    support_force_a_vertical -= support_force_b_vertical
+    point_load_right = 0
+    point_load_left = 0
+    if length == position_b:
+        for distributed in st.session_state.distributed_load_array:
+            resulting_forces += distributed["distributed_load"] * length / 2
+            support_force_a_vertical += distributed["distributed_load"] * length
+        for point_load in st.session_state.forces_array:
+            point_load_calculation += point_load["point_load"] * (point_load["position"] / length)
+            support_force_a_vertical += point_load["point_load"]
+        support_force_b_vertical = point_load_calculation + resulting_forces
+        support_force_a_vertical -= support_force_b_vertical
+        
+    else:
+        for distributed in st.session_state.distributed_load_array:
+            resulting_forces_all += distributed["distributed_load"] * (length**2) / 2
+            resulting_forces_left += distributed["distributed_load"] * (position_b**2) / 2
+            resulting_forces_right += distributed["distributed_load"] * ((length - position_b)**2) / 2
+        for point_load in st.session_state.forces_array:
+            point_load_calculation += point_load["point_load"] * point_load["position"]
+            if point_load["position"]<= position_b:
+                point_load_left += point_load["point_load"] * (position_b-point_load["position"])
+            else:
+                point_load_right += point_load["point_load"] * (point_load["position"]-position_b)
+        support_force_b_vertical = (point_load_calculation + resulting_forces_all)/position_b
+        support_force_a_vertical = (resulting_forces_left+point_load_left-resulting_forces_right-point_load_right)/position_b
     support_force_a_vertical = round(support_force_a_vertical, 2)
     support_force_b_vertical = round(support_force_b_vertical, 2)
     # deleting support forces
@@ -286,26 +310,27 @@ def do_calculations_system():
     st.session_state.support_forces.append({"side": "left", "support_force": support_force_a_vertical})
     st.session_state.support_forces.append({"side": "right", "support_force": support_force_b_vertical})
     st.session_state.maximum_moment_position_in_array = 0
+# calculation of the static system
+def do_calculations_system():
+    calculate_support_forces()
     # calculation of the maximum moment
     # only distributed load
-    if len(st.session_state.distributed_load_array) != 0 and len(st.session_state.forces_array) == 0:
+    if len(st.session_state.distributed_load_array) != 0 and len(st.session_state.forces_array) == 0 and length==position_b:
         st.session_state.position = 0
         number_of_content_d= 0
         st.session_state.maximum_moment = 0
         st.session_state.weight_calculation_option = 1
-
         st.session_state.max_v = float(st.session_state.support_forces[0]['support_force'])
-
         while number_of_content_d < len(st.session_state.distributed_load_array):
             st.session_state.maximum_moment += st.session_state.distributed_load_array[number_of_content_d]['distributed_load'] * (length**2) / 8
             number_of_content_d += 1
         st.session_state.position = length/2
     # only pointload
-    elif (len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]['distributed_load'] == 0) and len(st.session_state.forces_array) != 0: 
+    elif (len(st.session_state.distributed_load_array) == 0 or st.session_state.distributed_load_array[0]['distributed_load'] == 0) and len(st.session_state.forces_array) != 0 and length==position_b: 
         st.session_state.position = 0
         st.session_state.maximum_moment = 0
         st.session_state.weight_calculation_option = 2
-        # deciding on which side of the system the forces are located
+        # assign a side to pointloads
         for obj in st.session_state.forces_array:
             if obj['position'] > length / 2:
                 side = "right"
@@ -357,20 +382,17 @@ def do_calculations_system():
         if st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]['side'] == "right":
             st.session_state.position = length-st.session_state.position
     # point and distributed load
-    elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0:
+    elif (len(st.session_state.distributed_load_array) != 1 or st.session_state.distributed_load_array[0]['distributed_load'] != 0) and len(st.session_state.forces_array) != 0 and length==position_b:
         st.session_state.weight_calculation_option = 3
         st.session_state.maximum_moment = 0
         for obj in st.session_state.forces_array:
-            # Bestimmung der Seite zu welchem Auflager die geringere Entfernung besteht
+            # assign a side to pointloads
             if obj['position'] > length / 2:
                 side = "right"
-                # Füge die neue Eigenschaft zum forces_array hinzu
                 obj['side'] = side
-                # Die Entfernung zum Auflager B wird erstellt
                 obj['position'] = length - obj['position']
             elif obj['position'] <= length / 2:
                 side = "left"
-                # Füge die neue Eigenschaft zum forces_array hinzu
                 obj['side'] = side
         left_side_moment_point_load = 0
         right_side_moment_point_load = 0
@@ -439,13 +461,13 @@ def do_calculations_system():
                             st.session_state.position_max_momentum -= st.session_state.forces_array[index_counter_position]['point_load']
                         st.session_state.position_max_momentum -= position_added_distributed_load * (float(st.session_state.forces_array[index_counter_position]['position']) - last_added_position)
                         last_added_position = st.session_state.forces_array[index_counter_position]['position']
-                        # Überprüfung, ob die folgenden Werte noch links sind
+                        # check if the values are on the right side
                         count_right = 0
                         for index_count_side in range(index_counter_position + 1, len(st.session_state.forces_array)):
                             if st.session_state.forces_array[index_count_side]['side'] == 'right':
                                 count_right += 1
                         index_counter_position += 1
-                        # Prüfen, ob der Nullpunkt zwischen zwei Punktlasten liegt.
+                        # check if Q(x)=0 is between two pointloads
                         st.session_state.position = last_added_position
                         position_between_point_loads = 0
                         position_between_point_loads = st.session_state.position_max_momentum / float(position_added_distributed_load)
@@ -476,32 +498,140 @@ def do_calculations_system():
         # Überprüfen, ob das maximale Moment auf der rechten oder linken Hälfte ist und anschließende Berechnung
         while index_counter < len(st.session_state.forces_array):
             if st.session_state.forces_array[index_counter]['side'] == st.session_state.side_and_position_max_momentum[0] and st.session_state.forces_array[index_counter]['position'] < float(st.session_state.side_and_position_max_momentum[1]):
-                st.session_state.maximum_moment += -float(st.session_state.forces_array[index_counter]['point_load']) * (
-                    float(st.session_state.side_and_position_max_momentum[1]) - float(st.session_state.forces_array[index_counter]['position'])
-                )
-                index_counter += 1  # Hochzählen, damit jedes Objekt einzeln abgefragt wird.
+                st.session_state.maximum_moment += -float(st.session_state.forces_array[index_counter]['point_load']) * (float(st.session_state.side_and_position_max_momentum[1]) - float(st.session_state.forces_array[index_counter]['position']))
+                index_counter += 1 
             else:
                 index_counter += 1
         number_of_content_d = 0
         # adding the distributed load
         while number_of_content_d < len(st.session_state.distributed_load_array):
             st.session_state.maximum_moment = float(st.session_state.maximum_moment) - (
-                float(st.session_state.distributed_load_array[number_of_content_d]['distributed_load'])
-                * (float(st.session_state.side_and_position_max_momentum[1]) ** 2) / 2
-            )
+                float(st.session_state.distributed_load_array[number_of_content_d]['distributed_load']) * (float(st.session_state.side_and_position_max_momentum[1]) ** 2) / 2)
             number_of_content_d += 1
         for side in st.session_state.forces_array:
             if side["side"] == "right":
                 side["position"]=length -side["position"]
         if st.session_state.side_and_position_max_momentum[0] == 'right':
             st.session_state.position = length - st.session_state.position 
+    elif length!=position_b:
+        if st.session_state.support_forces[1]['support_force']<0:
+            if st.session_state.support_forces[0]['support_force']>-st.session_state.support_forces[1]['support_force']:
+                st.session_state.max_v = float(st.session_state.support_forces[0]['support_force'])
+            else:
+                st.session_state.max_v = -float(st.session_state.support_forces[1]['support_force'])
+        else:
+            if st.session_state.support_forces[0]['support_force']>st.session_state.support_forces[1]['support_force']:
+                st.session_state.max_v = float(st.session_state.support_forces[0]['support_force'])
+            else:
+                st.session_state.max_v = float(st.session_state.support_forces[1]['support_force'])
+        st.session_state.weight_calculation_option = 4
+        st.session_state.maximum_moment = 0
+        distributed_load_force = 0
+        if len(st.session_state.distributed_load_array) != 0:
+            for dist in st.session_state.distributed_load_array:
+                    distributed_load_force += dist["distributed_load"]
+        position_max_momentum = st.session_state.support_forces[0]["support_force"]
+        # checking the position of the maximum moment
+        # point load between A and B
+        if (len(st.session_state.forces_array) != 0) and (len(st.session_state.distributed_load_array) == 0):
+            st.session_state.forces_array.sort(key=lambda x: x['position'])
+            index_counter_position=0
+            while position_max_momentum > 0:
+                if st.session_state.forces_array[index_counter_position]["position"] > position_b:
+                    position_max_momentum = position_b
+                    break
+                position_max_momentum = position_max_momentum - st.session_state.forces_array[index_counter_position]["point_load"]
+                if position_max_momentum < 0:
+                    position_max_momentum = st.session_state.forces_array[index_counter_position]["position"]
+                    break
+                index_counter_position += 1
+            if st.session_state.support_forces[0]["support_force"]<0:
+                position_max_momentum = position_b
+            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+            st.session_state.position = position_max_momentum
+        # point load behind B
+        elif (len(st.session_state.forces_array) != 0) and (len(st.session_state.distributed_load_array) == 0) and st.session_state.forces_array[0]["position"] > position_b:
+            position_max_momentum = position_b
+            st.session_state.position = position_max_momentum
+        # point and distributed load
+        elif (len(st.session_state.forces_array) != 0) and (len(st.session_state.distributed_load_array) != 0):
+            st.session_state.forces_array.sort(key=lambda x: x['position'])
+            index_counter_position=0
+            while position_max_momentum > 0:
+                if index_counter_position==0:
+                    current_position = position_max_momentum/distributed_load_force
+                    if current_position < st.session_state.forces_array[index_counter_position]["position"]:
+                        position_max_momentum = current_position
+                        break
+                    position_max_momentum -= distributed_load_force * st.session_state.forces_array[index_counter_position]["position"]
+                if st.session_state.forces_array[index_counter_position]["position"] < position_b:
+                    position_max_momentum -= st.session_state.forces_array[index_counter_position]["point_load"]
+                    last_added_position = st.session_state.forces_array[index_counter_position]["position"]
+                    index_counter_position += 1
+                else:
+                    position_max_momentum = position_b
+                    break
+                if position_max_momentum < 0:
+                    position_max_momentum = last_added_position
+                    break                
+                position_between_point_loads = 0
+                position_between_point_loads = position_max_momentum / distributed_load_force
+                if index_counter_position != len(st.session_state.forces_array):
+                    position_max_momentum -= distributed_load_force * st.session_state.forces_array[index_counter_position]["position"]
+                if index_counter_position == len(st.session_state.forces_array) or position_between_point_loads < float(st.session_state.forces_array[index_counter_position]['position'] - last_added_position):
+                    position_max_momentum = st.session_state.forces_array[index_counter_position-1]['position'] + position_between_point_loads
+                    break
+            position_max_momentum=round(position_max_momentum,2)
+            st.session_state.position = position_max_momentum
+            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+        # only distributed load
+        elif (len(st.session_state.forces_array) == 0) and (len(st.session_state.distributed_load_array) != 0):
+            position_max_momentum = position_max_momentum/distributed_load_force
+
+            st.session_state.position = position_max_momentum
+        # maximum moment Feld
+        maximum_moment_field = (st.session_state.support_forces[0]["support_force"] * st.session_state.position)
+        if len(st.session_state.forces_array) !=0:
+            index_countr_side=0
+            st.session_state.forces_array.sort(key=lambda x: x['position'])
+            while index_countr_side != len(st.session_state.forces_array):
+                if st.session_state.forces_array[index_countr_side]["position"]<st.session_state.position:
+                    maximum_moment_field = maximum_moment_field - st.session_state.forces_array[index_countr_side]["point_load"]*(st.session_state.position - st.session_state.forces_array[index_countr_side]["position"])
+                    index_countr_side+=1
+                else:
+                    break
+            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+        if len(st.session_state.distributed_load_array):
+            maximum_moment_field = maximum_moment_field-(distributed_load_force*st.session_state.position**2)/2
+        st.session_state.maximum_moment = maximum_moment_field
+        # Kragarm
+        maximum_moment_kragarm = (st.session_state.support_forces[0]["support_force"] * position_b)
+        if len(st.session_state.forces_array) !=0:
+            index_countr_side=0
+            st.session_state.forces_array.sort(key=lambda x: x['position'])
+            while index_countr_side != len(st.session_state.forces_array):
+                if st.session_state.forces_array[index_countr_side]["position"]<position_b:
+                    maximum_moment_kragarm = maximum_moment_kragarm - st.session_state.forces_array[index_countr_side]["point_load"]*(position_b-st.session_state.forces_array[index_countr_side]["position"])
+                    index_countr_side+=1
+                else:
+                    break
+            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+        if len(st.session_state.distributed_load_array):
+            maximum_moment_kragarm = maximum_moment_kragarm - (distributed_load_force*position_b**2)/2
+        st.session_state.maximum_moment_kragarm = maximum_moment_kragarm
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
+    st.session_state.maximum_moment_kragarm = round(st.session_state.maximum_moment_kragarm, 2)
     st.session_state.safe_maximum_moment = 0
+    st.session_state.safe_maximum_moment_kragarm = 0
     #Moment vor dem Einfluss des Sicherheitsbeiwerts sichern.
+    if st.session_state.maximum_moment_kragarm != st.session_state.safe_maximum_moment_kragarm:
+        st.session_state.safe_maximum_moment_kragarm = st.session_state.maximum_moment_kragarm
     if st.session_state.maximum_moment != st.session_state.safe_maximum_moment:
-        st.session_state.safe_maximum_moment += float(st.session_state.maximum_moment)
+        st.session_state.safe_maximum_moment = float(st.session_state.maximum_moment)
     st.session_state.maximum_moment *= st.session_state.safety_factor
     st.session_state.maximum_moment = round(st.session_state.maximum_moment, 2)
+    st.session_state.maximum_moment_kragarm *= st.session_state.safety_factor
+    st.session_state.maximum_moment_kragarm = round(st.session_state.maximum_moment_kragarm, 2)
 if "layer_load_roof" not in st.session_state:
     st.session_state.layer_load_roof={
         "Kies 5cm": 1,
@@ -519,20 +649,21 @@ with st.container():
     with col1:
         st.image("logo/logo_mit_text.png",width=300)
     with col2:
-        st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems eines Einfeldträgers genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
+        st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems eines Einfeldträgers genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden.")
+        st.write("Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
 # static system
 with st.container(border=True):
     col1, col3 = st.columns(2)
     with col1:
         # input for the static system
-        st.header("Eingabe für das statische System")
+        st.header("Eingabe statische System")
         with st.container():
             col1, col2 = st.columns(2)
             with col1:
                 length_input = st.slider("Spannweite (m)", min_value = 0.1, max_value = 30.0, value = 5.0, step = 0.1, help="Die Spannweite bestimmt die Länge des Trägers.")
                 length = float(length_input)
-                #position_b_input = st.slider("Spannweite (m)", min_value = 0.1, max_value = 30.0, value = length, step = 0.1, help="Die Anpassung dieser Länge wird zum erzeugen eines Kragarms verwendet.")
-                #position_b = float(position_b_input)
+                position_b_input = st.slider("Auflagerposition (m)", min_value = 0.1, max_value = length, value = length, step = 0.1, help="Die Anpassung dieser Länge wird zum erzeugen eines Kragarms verwendet.")
+                position_b = float(position_b_input)
                 grid_input = st.slider("Lasteinzugsbreite (m)", min_value = 0.1, max_value = 15.0, value = 3.0, step = 0.1, help="Die Lasteinzugsbreite wird benötigt um die Last des Dachaufbaus auf den Träger zu bestimmen.")
                 grid = float(grid_input)
             with col2:
@@ -662,15 +793,26 @@ with st.container(border=True):
         def drawing_system():
             # systemline
             startpoint_a = 0
-            endpoint_b = 10
+            endpoint_b = length
             middle_of_canvas_y = 5
             x_values_systemline = np.array([startpoint_a, endpoint_b])
             y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
-            # matplotlib-function to draw a line
             fig, ax = plt.subplots()
             ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
             ax.set_title('statisches System')
-            plt.text(startpoint_a+((endpoint_b-startpoint_a)/2), middle_of_canvas_y-0.5, f'{length}m', fontsize=8, color='black', ha='center', va='center')
+            # distances
+            x_values_systemline = np.array([startpoint_a, startpoint_a, startpoint_a, position_b, position_b, position_b])
+            y_values_systemline = np.array([middle_of_canvas_y-2.7,middle_of_canvas_y-3.3, middle_of_canvas_y-3, middle_of_canvas_y-3, middle_of_canvas_y-2.7,middle_of_canvas_y-3.3])
+            ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+            plt.text(startpoint_a+((position_b-startpoint_a)/2), middle_of_canvas_y-3-0.5, f'{position_b}m', fontsize=8, color='black', ha='center', va='center')
+            if length!=position_b:
+                x_values_systemline = np.array([position_b, endpoint_b, endpoint_b, endpoint_b])
+                y_values_systemline = np.array([middle_of_canvas_y-3, middle_of_canvas_y-3, middle_of_canvas_y-2.7,middle_of_canvas_y-3.3])
+                ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
+                text2=length-position_b
+                text2=round(text2,2)
+                st.write(text2)
+                plt.text(startpoint_a+position_b+((length-position_b)/2), middle_of_canvas_y-3-0.5, f'{text2}m', fontsize=8, color='black', ha='center', va='center')
             # supports
             # fixed support
             x_values_fixed_support = np.array([startpoint_a, startpoint_a+0.5, startpoint_a-0.5, startpoint_a])
@@ -684,16 +826,17 @@ with st.container(border=True):
                 ax.plot(x_values_fixed_support_slash, y_values_fixed_support_slash, marker=',', linestyle='-', color='black')
                 counter_slashes_fixed += 1
             # not fixed support
-            x_values_not_fixed_support = np.array([endpoint_b, endpoint_b+0.5, endpoint_b-0.5, endpoint_b])
+            position_b_drawing = position_b
+            x_values_not_fixed_support = np.array([position_b_drawing, position_b_drawing+0.5, position_b_drawing-0.5, position_b_drawing])
             y_values_not_fixed_support = np.array([middle_of_canvas_y, middle_of_canvas_y-1, middle_of_canvas_y-1, middle_of_canvas_y])
             ax.plot(x_values_not_fixed_support, y_values_not_fixed_support, marker=',', linestyle='-', color='black')
-            plt.text(endpoint_b+1, middle_of_canvas_y-0.5, 'B', fontsize=8, color='black', ha='center', va='center')
-            x_value_litle_line = np.array([endpoint_b-0.7, endpoint_b+0.7])
+            plt.text(position_b_drawing+1, middle_of_canvas_y-0.5, 'B', fontsize=8, color='black', ha='center', va='center')
+            x_value_litle_line = np.array([position_b_drawing-0.7, position_b_drawing+0.7])
             y_value_litle_line = np.array([middle_of_canvas_y-1.2, middle_of_canvas_y-1.2])
             ax.plot(x_value_litle_line, y_value_litle_line, marker=',', linestyle='-', color='black')
             counter_slashes_fixed = 0
             while (counter_slashes_fixed<5):
-                x_values_not_fixed_support_slash = np.array([endpoint_b-0.6+0.2*counter_slashes_fixed, endpoint_b-0.4+0.2*counter_slashes_fixed])
+                x_values_not_fixed_support_slash = np.array([position_b_drawing-0.6+0.2*counter_slashes_fixed, position_b_drawing-0.4+0.2*counter_slashes_fixed])
                 y_values_not_fixed_support_slash = np.array([middle_of_canvas_y-1.5, middle_of_canvas_y-1.2])
                 ax.plot(x_values_not_fixed_support_slash, y_values_not_fixed_support_slash, marker=',', linestyle='-', color='black')
                 counter_slashes_fixed += 1
@@ -702,31 +845,38 @@ with st.container(border=True):
                 if arrow_field["distributed_load"] != 0:
                     length_between_supports = endpoint_b-startpoint_a
                     x_value_distributed = np.array([startpoint_a, endpoint_b, endpoint_b, startpoint_a])
-                    y_value_distributed = np.array([middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"]])
+                    y_value_distributed = np.array([middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.7+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.7+0.6*arrow_field["counter_distributed_load"]])
                     ax.plot(x_value_distributed, y_value_distributed, marker=',', linestyle='-', color='black')
                     length_between_supports = length_between_supports/7
                     counter_arrows_dist = 0
                     while counter_arrows_dist<8:
                         force_location_x = startpoint_a + length_between_supports*counter_arrows_dist
                         x_value_tip = np.array([force_location_x-0.1,force_location_x,force_location_x+0.1])
-                        y_value_tip = np.array([middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.2+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"]])
+                        y_value_tip = np.array([middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.4+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"]])
                         ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
                         x_value_stick = np.array([force_location_x, force_location_x])
-                        y_value_stick = np.array([middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"]])
+                        y_value_stick = np.array([middle_of_canvas_y+0.5+0.6*arrow_field["counter_distributed_load"], middle_of_canvas_y+0.7+0.6*arrow_field["counter_distributed_load"]])
                         ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
                         counter_arrows_dist +=1
-                    plt.text(endpoint_b+1, middle_of_canvas_y+0.3+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=8, color='black', ha='left', va='center')       
+                    plt.text(endpoint_b+1, middle_of_canvas_y+0.6+0.6*arrow_field["counter_distributed_load"], f'q{arrow_field["counter_distributed_load"]+1} = {arrow_field["distributed_load"]}kN/m', fontsize=8, color='black', ha='left', va='center')       
             # pointload
+            st.session_state.forces_array.sort(key=lambda x: x['position'])
+            counter_image_arrow = 0
             for arrow in st.session_state.forces_array:
                     force_location_x = startpoint_a + ((endpoint_b-startpoint_a)/length)*arrow["position"]
                     x_value_tip = np.array([force_location_x-0.3,force_location_x,force_location_x+0.3])
-                    y_value_tip = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.1+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array)])
+                    y_value_tip = np.array([middle_of_canvas_y+0.8+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+0.8+0.6*len(st.session_state.distributed_load_array)])
                     ax.plot(x_value_tip, y_value_tip, marker=',', linestyle='-', color='black')
                     x_value_stick = np.array([force_location_x, force_location_x])
-                    y_value_stick = np.array([middle_of_canvas_y+0.2+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
+                    y_value_stick = np.array([middle_of_canvas_y+0.4+0.6*len(st.session_state.distributed_load_array), middle_of_canvas_y+4])
                     ax.plot(x_value_stick, y_value_stick , marker=',', linestyle='-', color='black')
-                    plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
-            plt.xlim(-2,12)
+                    if counter_image_arrow % 2 == 1:
+                        plt.text(force_location_x, middle_of_canvas_y+5.1, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
+                    else:
+                        plt.text(force_location_x, middle_of_canvas_y+4.5, f'F{arrow["counter_forces"]+1} = {arrow["point_load"]}kN', fontsize=12, color='black', ha='center', va='center')
+                    counter_image_arrow+=1
+            st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
+            plt.xlim(-2,length+2)
             plt.ylim(-2,12)
             plt.axis('off')
             st.pyplot(fig,use_container_width=True)
@@ -734,97 +884,289 @@ with st.container(border=True):
         drawing_system()
         if len(st.session_state.distributed_load_array)!=0 or len(st.session_state.forces_array)!=0:
             with st.container():
-                # only pointload
+                # display of the inner forces
                 st.session_state.forces_array.sort(key=lambda x: x['position'])
-                def add_condition_transverse_force(calculation, x_value):
-                    counter_list=1
-                    equation_list = []
-                    equation_list.append(calculation)
-                    condition_equation_list = []
-                    condition_equation_list.append(x_value<st.session_state.forces_array[0]["position"])
-                    # adding the pointLoads to the right spots
-                    for forces_equation in st.session_state.forces_array:
-                        # creating the new equations for the specific range of x
-                        new_equation = calculation + forces_equation["point_load"]
-                        calculation = new_equation
-                        equation_list.append(new_equation)
-                        # creating the specific range of x
-                        if counter_list is not len(st.session_state.forces_array):
-                            new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
-                            counter_list+=1
-                        else:
-                            new_condition = (forces_equation["position"] <= x_value)
-                        condition_equation_list.append(new_condition)
-                    # giving each range the right equation
-                    result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
-                    final_equation_transverse = np.sum(result_equation, axis=0)
-                    return final_equation_transverse
-                def add_condition_moment_curve(calculation, x_value):
-                    counter_list=1
-                    calculation += -(st.session_state.support_forces[0]['support_force']*(x_value))
-                    equation_list = []
-                    equation_list.append(calculation)
-                    condition_equation_list = []
-                    condition_equation_list.append(x_value <= st.session_state.forces_array[0]["position"])
-                    # adding the pointLoads to the right spots
-                    for forces_equation_m in st.session_state.forces_array:
-                        # creating the new equations for the specific range of x
-                        new_calculation = calculation + (forces_equation_m["point_load"]*(x_value-forces_equation_m["position"]))
-                        calculation = new_calculation
-                        equation_list.append(new_calculation)
-                        # creating the specific range of x
-                        if counter_list is not len(st.session_state.forces_array):
-                            new_condition = (forces_equation_m["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
-                            counter_list+=1
-                        else:
-                            new_condition = (forces_equation_m["position"] < x_value)
-                        condition_equation_list.append(new_condition)
-                    # giving each range the right equation
-                    result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
-                    final_equation_transverse = np.sum(result_equation, axis=0)
-                    return final_equation_transverse
-                def non_linear_function_transverse(x):
-                            equation=-st.session_state.support_forces[0]['support_force']
-                            if len(st.session_state.distributed_load_array) !=0:
-                                for dist_load in st.session_state.distributed_load_array:
-                                    equation += (dist_load["distributed_load"]*x)
-                                final_equation_transverse = equation
-                            if len(st.session_state.forces_array) != 0:
-                                final_equation_transverse = add_condition_transverse_force(equation, x)
-                            return final_equation_transverse
-                def non_linear_function_moment(x):
-                            final_equation=0
-                            if len(st.session_state.distributed_load_array) !=0:
-                                for dist_load in st.session_state.distributed_load_array:
-                                    final_equation -= (dist_load["distributed_load"]*(x)*(length-x))/2
-                                if len(st.session_state.forces_array) != 0: 
-                                    final_equation = 0
+                if position_b==length:
+                    def add_condition_transverse_force(calculation, x_value):
+                        counter_list=1
+                        equation_list = []
+                        equation_list.append(calculation)
+                        condition_equation_list = []
+                        condition_equation_list.append(x_value<st.session_state.forces_array[0]["position"])
+                        # adding the pointLoads to the right spots
+                        for forces_equation in st.session_state.forces_array:
+                            # creating the new equations for the specific range of x
+                            new_equation = calculation + forces_equation["point_load"]
+                            calculation = new_equation
+                            equation_list.append(new_equation)
+                            # creating the specific range of x
+                            if counter_list is not len(st.session_state.forces_array):
+                                new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                counter_list+=1
+                            else:
+                                new_condition = (forces_equation["position"] <= x_value)
+                            condition_equation_list.append(new_condition)
+                        # giving each range the right equation
+                        result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                        final_equation_transverse = np.sum(result_equation, axis=0)
+                        return final_equation_transverse
+                    def add_condition_moment_curve(calculation, x_value):
+                        counter_list=1
+                        calculation += -(st.session_state.support_forces[0]['support_force']*(x_value))
+                        equation_list = []
+                        equation_list.append(calculation)
+                        condition_equation_list = []
+                        condition_equation_list.append(x_value <= st.session_state.forces_array[0]["position"])
+                        # adding the pointLoads to the right spots
+                        for forces_equation_m in st.session_state.forces_array:
+                            # creating the new equations for the specific range of x
+                            new_calculation = calculation + (forces_equation_m["point_load"]*(x_value-forces_equation_m["position"]))
+                            calculation = new_calculation
+                            equation_list.append(new_calculation)
+                            # creating the specific range of x
+                            if counter_list is not len(st.session_state.forces_array):
+                                new_condition = (forces_equation_m["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                counter_list+=1
+                            else:
+                                new_condition = (forces_equation_m["position"] < x_value)
+                            condition_equation_list.append(new_condition)
+                        # giving each range the right equation
+                        result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                        final_equation_transverse = np.sum(result_equation, axis=0)
+                        return final_equation_transverse
+                    def non_linear_function_transverse(x):
+                                equation=-st.session_state.support_forces[0]['support_force']
+                                if len(st.session_state.distributed_load_array) !=0:
+                                    for dist_load in st.session_state.distributed_load_array:
+                                        equation += (dist_load["distributed_load"]*x)
+                                    final_equation_transverse = equation
+                                if len(st.session_state.forces_array) != 0:
+                                    final_equation_transverse = add_condition_transverse_force(equation, x)
+                                return final_equation_transverse
+                    def non_linear_function_moment(x):
+                                final_equation=0
+                                if len(st.session_state.distributed_load_array) !=0:
+                                    for dist_load in st.session_state.distributed_load_array:
+                                        final_equation -= (dist_load["distributed_load"]*(x)*(length-x))/2
+                                    if len(st.session_state.forces_array) != 0: 
+                                        final_equation = 0
+                                        for dist_load in st.session_state.distributed_load_array:
+                                            final_equation += (dist_load["distributed_load"]*(x)**2)/2
+                                        final_equation = add_condition_moment_curve(final_equation, x)
+                                if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
+                                        final_equation = add_condition_moment_curve(final_equation, x)
+                                return final_equation
+                else:
+                    def add_condition_transverse_force(calculation, x_value):
+                        counter_list=1
+                        equation_list = []
+                        equation_list.append(calculation)
+                        condition_equation_list = []
+                        if st.session_state.forces_array[0]["position"]<position_b:
+                            condition_equation_list.append(x_value<st.session_state.forces_array[0]["position"])
+                        elif st.session_state.forces_array[0]["position"]>position_b: 
+                            condition_equation_list.append(x_value<position_b)
+                            new_equation = calculation - st.session_state.support_forces[1]['support_force']
+                            calculation = new_equation
+                        # adding the pointLoads to the right spots
+                        for forces_equation in st.session_state.forces_array:
+                            # creating the new equations for the specific range of x
+                            new_equation = calculation + forces_equation["point_load"]
+                            calculation = new_equation
+                            # creating the specific range of x
+                            if counter_list is not len(st.session_state.forces_array) and forces_equation["position"] < position_b:
+                                equation_list.append(new_equation)
+                                if st.session_state.forces_array[counter_list]["position"] > position_b:
+                                    new_condition = (forces_equation["position"] <= x_value) & (x_value < position_b)
+                                    condition_equation_list.append(new_condition)
+                                    new_equation = calculation - st.session_state.support_forces[1]['support_force']
+                                    calculation = new_equation
+                                    new_condition = (position_b <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                    equation_list.append(new_equation)
+                                else:
+                                    new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                counter_list+=1
+                            elif counter_list is len(st.session_state.forces_array) and forces_equation["position"] < position_b:
+                                equation_list.append(new_equation)
+                                new_condition = (forces_equation["position"] <= x_value) & (x_value < position_b)
+                                condition_equation_list.append(new_condition)
+                                new_condition = position_b <= x_value
+                                new_equation = calculation - st.session_state.support_forces[1]['support_force']
+                                calculation = new_equation
+                                equation_list.append(calculation)
+                                condition_equation_list.append(new_condition)
+                                counter_list+=1
+                            elif counter_list is not len(st.session_state.forces_array) and forces_equation["position"] > position_b:
+                                if counter_list is 1:
+                                    new_equation = calculation - forces_equation["point_load"]
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    new_condition = (position_b <= x_value) & (x_value < forces_equation["position"])
+                                    new_equation = calculation + forces_equation["point_load"]
+                                    calculation = new_equation
+                                    condition_equation_list.append(new_condition)
+                                    equation_list.append(new_equation)
+                                    new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                    counter_list+=1
+                                else:
+                                    equation_list.append(new_equation)
+                                    new_condition = (forces_equation["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                    counter_list+=1
+                            elif counter_list is len(st.session_state.forces_array) and forces_equation["position"] > position_b:
+                                if len(st.session_state.forces_array) is 1 and forces_equation["position"] > position_b:
+                                    new_equation = calculation - forces_equation["point_load"]
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    new_condition = (position_b <= x_value) & (x_value < forces_equation["position"])
+                                    condition_equation_list.append(new_condition)
+                                    new_equation = calculation + forces_equation["point_load"]
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    new_condition = (forces_equation["position"] <= x_value)
+                                    condition_equation_list.append(new_condition)
+                                    counter_list+=1
+                                else:
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    condition_equation_list.append(forces_equation["position"] <= x_value)
+                                    counter_list+=1
+                        # giving each range the right equation
+                        result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                        final_equation_transverse = np.sum(result_equation, axis=0)
+                        return final_equation_transverse
+                    def add_condition_moment_curve(calculation, x_value):
+                        counter_list=1
+                        equation_list = []
+                        equation_list.append(calculation)
+                        condition_equation_list = []
+                        if st.session_state.forces_array[0]["position"]<position_b:
+                            condition_equation_list.append(x_value<st.session_state.forces_array[0]["position"])
+                        elif st.session_state.forces_array[0]["position"]>position_b: 
+                            condition_equation_list.append(x_value<position_b)
+                            new_equation = calculation - st.session_state.support_forces[1]['support_force']*(x_value-position_b)
+                            calculation = new_equation
+                        # adding the pointLoads to the right spots
+                        for forces_equation_m in st.session_state.forces_array:
+                            # creating the new equations for the specific range of x
+                            new_equation = calculation + forces_equation_m["point_load"]*(x_value-forces_equation_m["position"])
+                            calculation = new_equation
+                            # creating the specific range of x
+                            if counter_list is not len(st.session_state.forces_array) and forces_equation_m["position"] < position_b:
+                                if st.session_state.forces_array[counter_list]["position"] > position_b:
+                                    equation_list.append(new_equation)
+                                    new_condition = (forces_equation_m["position"] <= x_value) & (x_value < position_b)
+                                    condition_equation_list.append(new_condition)
+                                    new_equation = calculation - (st.session_state.support_forces[1]['support_force']*(x_value-position_b))
+                                    calculation = new_equation
+                                    new_condition = (position_b <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                    equation_list.append(new_equation)
+                                else:
+                                    equation_list.append(new_equation)
+                                    new_condition = (forces_equation_m["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                counter_list+=1
+                            elif counter_list is len(st.session_state.forces_array) and forces_equation_m["position"] < position_b:
+                                equation_list.append(new_equation)
+                                new_condition = (forces_equation_m["position"] <= x_value) & (x_value < position_b)
+                                condition_equation_list.append(new_condition)
+                                new_condition = position_b <= x_value
+                                new_equation = calculation - (st.session_state.support_forces[1]['support_force']*(x_value-position_b))
+                                calculation = new_equation
+                                equation_list.append(calculation)
+                                condition_equation_list.append(new_condition)
+                                counter_list+=1
+                            elif counter_list is not len(st.session_state.forces_array) and forces_equation_m["position"] > position_b:
+                                if counter_list is 1:
+                                    new_equation = calculation - forces_equation_m["point_load"]*(x_value-forces_equation_m["position"])
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    new_condition = (position_b <= x_value) & (x_value < forces_equation_m["position"])
+                                    new_equation = calculation + forces_equation_m["point_load"]*(x_value-forces_equation_m["position"])
+                                    calculation = new_equation
+                                    condition_equation_list.append(new_condition)
+                                    equation_list.append(new_equation)
+                                    new_condition = (forces_equation_m["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                    counter_list+=1
+                                else:
+                                    equation_list.append(new_equation)
+                                    new_condition = (forces_equation_m["position"] <= x_value) & (x_value < st.session_state.forces_array[counter_list]["position"])
+                                    condition_equation_list.append(new_condition)
+                                    counter_list+=1
+                            elif counter_list is len(st.session_state.forces_array) and forces_equation_m["position"] > position_b:
+                                if len(st.session_state.forces_array) is 1 and forces_equation_m["position"] > position_b:
+                                    new_equation = calculation - forces_equation_m["point_load"]*(x_value-forces_equation_m["position"])
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    new_condition = (position_b <= x_value) & (x_value < forces_equation_m["position"])
+                                    condition_equation_list.append(new_condition)  
+                                    new_equation = calculation + forces_equation_m["point_load"]*(x_value-forces_equation_m["position"])
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    condition_equation_list.append(forces_equation_m["position"] < x_value)
+                                    counter_list+=1
+                                else:
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    condition_equation_list.append(forces_equation_m["position"] < x_value)
+                                    counter_list+=1
+                        # giving each range the right equation
+                        result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                        final_equation_transverse = np.sum(result_equation, axis=0)
+                        return final_equation_transverse
+                    def non_linear_function_transverse(x):
+                                equation=-st.session_state.support_forces[0]['support_force']
+                                if len(st.session_state.distributed_load_array) !=0:
+                                    for dist_load in st.session_state.distributed_load_array:
+                                        equation += (dist_load["distributed_load"]*x)
+                                    final_equation_transverse = equation
+                                if len(st.session_state.forces_array) != 0:
+                                    final_equation_transverse = add_condition_transverse_force(equation, x)
+                                #equations if there is no pointload
+                                elif len(st.session_state.forces_array) == 0 and len(st.session_state.distributed_load_array) !=0:
+                                    calculation = equation
+                                    equation_list = []
+                                    equation_list.append(calculation)
+                                    condition_equation_list = []
+                                    condition_equation_list.append(x<position_b)
+                                    calculation = calculation - st.session_state.support_forces[1]['support_force']
+                                    equation_list.append(calculation)
+                                    condition_equation_list.append(position_b<=x)
+                                    # giving each range the right equation
+                                    result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                                    final_equation_transverse = np.sum(result_equation, axis=0)
+                                return final_equation_transverse
+                    def non_linear_function_moment(x):
+                                final_equation=0
+                                final_equation = -(st.session_state.support_forces[0]['support_force']*x)
+                                if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) !=0:
                                     for dist_load in st.session_state.distributed_load_array:
                                         final_equation += (dist_load["distributed_load"]*(x)**2)/2
-                                    final_equation = add_condition_moment_curve(final_equation, x)
-                            if len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
-                                    final_equation = add_condition_moment_curve(final_equation, x)
-                            return final_equation
-                col4, col5, col6=st.columns(3)
+                                    if len(st.session_state.forces_array) != 0: 
+                                        final_equation = add_condition_moment_curve(final_equation, x)
+                                elif len(st.session_state.forces_array) != 0 and len(st.session_state.distributed_load_array) ==0: 
+                                        final_equation = add_condition_moment_curve(final_equation, x)
+                                elif len(st.session_state.forces_array) == 0 and len(st.session_state.distributed_load_array) !=0:
+                                    calculation = final_equation
+                                    equation_list = []
+                                    equation_list.append(calculation)
+                                    condition_equation_list = []
+                                    condition_equation_list.append(x<position_b)
+                                    new_equation = calculation - (st.session_state.support_forces[1]['support_force']*(x-position_b))
+                                    calculation = new_equation
+                                    equation_list.append(calculation)
+                                    condition_equation_list.append(position_b<=x)
+                                    # giving each range the right equation
+                                    result_equation = [np.where(condition_equation_list, equation_list, 0) for condition_equation_list, equation_list in zip(condition_equation_list, equation_list)]
+                                    final_equation = np.sum(result_equation, axis=0)
+                                return final_equation
+                col4, col5=st.columns(2)
                 with col4:
-                    def draw_normal_force_curve():
-                        # systemline
-                        startpoint_a = 0
-                        endpoint_b = length
-                        middle_of_canvas_y = 0
-                        x_values_systemline = np.array([startpoint_a, endpoint_b])
-                        y_values_systemline = np.array([middle_of_canvas_y, middle_of_canvas_y])
-                        fig, ax = plt.subplots()
-                        # create plot
-                        ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
-                        ax.set_title('Normalkraftverlauf')
-                        plt.xlim()
-                        plt.ylim()
-                        plt.axis('off')
-                        st.pyplot(fig)
-                        plt.savefig("image_normal.png", dpi=150, format='png')
-                    draw_normal_force_curve()
-                with col5:
                     def draw_transverse_force_curve():
                         # systemline
                         startpoint_a = 0
@@ -842,17 +1184,36 @@ with st.container(border=True):
                         # x-values small steps
                         x_smooth = np.linspace(x_data.min(), x_data.max(), 100)
                         # y-values
-                        y_smooth = non_linear_function_transverse(x_smooth)
+                        y_smooth = -(non_linear_function_transverse(x_smooth))
                         # create plot
-                        ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
+                        ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve', color='cornflowerblue')
+                        # closing the curve
+                        length_y=(len(y_smooth))
+                        x_values_closing_left = np.array([startpoint_a, startpoint_a])
+                        y_values_closing_left = np.array([middle_of_canvas_y, y_smooth[0]])
+                        ax.plot(x_values_closing_left, y_values_closing_left, marker=',', linestyle='-', color='cornflowerblue')
+                        x_values_closing_right = np.array([endpoint_b, endpoint_b])
+                        y_values_closing_right = np.array([middle_of_canvas_y, y_smooth[length_y-1]])
+                        ax.plot(x_values_closing_right, y_values_closing_right, marker=',', linestyle='-', color='cornflowerblue')
                         ax.set_title('Querkraftverlauf')
+                        # adjusting the visible range
+                        if length==position_b:
+                            if st.session_state.support_forces[0]['support_force']>st.session_state.support_forces[1]['support_force']:
+                                yrange = st.session_state.support_forces[0]['support_force']*1.2
+                            else:
+                                yrange = st.session_state.support_forces[1]['support_force']*1.2
+                        else:
+                            if st.session_state.support_forces[0]['support_force']>st.session_state.support_forces[1]['support_force']:
+                                yrange = st.session_state.support_forces[0]['support_force']
+                            else:
+                                yrange = st.session_state.support_forces[1]['support_force']*0.8
                         plt.xlim()
-                        plt.ylim()
+                        plt.ylim(yrange,-yrange)
                         plt.axis('on')
                         st.pyplot(fig)
                         plt.savefig("image_transverse.png", dpi=150, format='png')
                     draw_transverse_force_curve()
-                with col6:
+                with col5:
                     def draw_moment_curve():
                         # systemline
                         startpoint_a = 0
@@ -870,25 +1231,34 @@ with st.container(border=True):
                         # Feinere Abtastung der x-Werte
                         x_smooth = np.linspace(x_data.min(), x_data.max(), 100)
                         # Nicht-lineare y-Werte berechnen
-                        y_smooth = non_linear_function_moment(x_smooth)
+                        y_smooth = -(non_linear_function_moment(x_smooth))
                         # create plot
-                        ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve')
+                        ax.plot(x_smooth, y_smooth, label='Glatte nicht-lineare Kurve', color='cornflowerblue')
                         ax.set_title('Momentenverlauf')
-                        yrange = st.session_state.maximum_moment*1.5
+                        # adjusting the visible range
+                        if position_b==length:
+                            yrange = st.session_state.safe_maximum_moment*1.5
+                        if position_b!=length:
+                            if st.session_state.safe_maximum_moment>(st.session_state.safe_maximum_moment_kragarm*-1):
+                                yrange = st.session_state.safe_maximum_moment*1.5
+                            else:
+                                yrange=st.session_state.safe_maximum_moment_kragarm*-1.5
                         plt.xlim()
-                        plt.ylim(-yrange, yrange)
+                        plt.ylim(yrange, -yrange)
                         plt.axis('on')
                         st.pyplot(fig)
                         plt.savefig("image_moment.png", dpi=150, format='png')            
                     draw_moment_curve()
         st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
-        # Ergebnissausgabe
+        # results
         st.subheader("Auflagerreaktionen A und B")
-        #st.text(auflagerreaktion)
         st.write(f"A = {st.session_state.support_forces[0]['support_force']} kN und B = {st.session_state.support_forces[1]['support_force']} kN")
         st.subheader("Maximales Moment")
-        #Moment ausgeben
-        st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
+        if length == position_b:
+            st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
+        else:
+            st.write(f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.")
+            st.write(f"Das Stützmoment beträgt {st.session_state.safe_maximum_moment_kragarm} kNm und liegt bei {position_b}m.")
 if "wood_data" not in st.session_state:
     st.session_state.wood_data = pd.read_excel('tabellen/Tabelle_Kantholz.xlsx')
 if "data_storage_wood" not in st.session_state:
@@ -964,21 +1334,36 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     weight = 0
     weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
     safe_weight = 0
-    safe_weight += weight
+    safe_weight += weight*length
     # convert kg in kN
-    weight = weight * length / 100
-    st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
-    st.session_state.maximum_moment_check = st.session_state.maximum_moment
+    weight = weight / 100
+    if length== position_b:
+        st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
+        st.session_state.maximum_moment_check = st.session_state.maximum_moment
+    elif length!= position_b:
+        if -st.session_state.maximum_moment_kragarm<st.session_state.maximum_moment:
+            st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
+            st.session_state.maximum_moment_check = st.session_state.maximum_moment
+        else:
+            st.session_state.safe_maximum_moment_check = -st.session_state.safe_maximum_moment_kragarm
+            st.session_state.maximum_moment_check = -st.session_state.maximum_moment_kragarm
+
     # for each constelation of loads a different weightcalculation
     if st.session_state.weight_calculation_option == 1:
-        st.session_state.maximum_moment_check += weight
-        st.session_state.safe_maximum_moment_check += weight
+        st.session_state.maximum_moment_check += (weight*length**2)/8
+        st.session_state.safe_maximum_moment_check += (weight*length**2)/8
     elif st.session_state.weight_calculation_option == 2:
-        st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
-        st.session_state.safe_maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
+        st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] **2)/ 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] **2)/ 2
     elif st.session_state.weight_calculation_option == 3:
-        st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
-        st.session_state.safe_maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
+        st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1])**2 / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1])**2 / 2
+    if st.session_state.maximum_moment_kragarm<st.session_state.maximum_moment and st.session_state.weight_calculation_option == 4:
+        st.session_state.maximum_moment_check += weight * (st.session_state.position)**2 / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.position)**2 / 2
+    elif st.session_state.maximum_moment_kragarm>st.session_state.maximum_moment and st.session_state.weight_calculation_option == 4:   
+        st.session_state.maximum_moment_check += weight * (position_b)**2 / 2
+        st.session_state.safe_maximum_moment_check += weight * (position_b)**2 / 2
     # Bei den Momentenbestimmungen auch die Position bestimmen
     st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
     st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
@@ -997,7 +1382,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     degree_of_utilization_w = round(st.session_state.needed_w / st.session_state.data_storage_wood[cross_section_wood_input]['available_w'] *100, 2)
     if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
         results_variant = f'''
-        Das gewählte Profil besteht die Tragfähigkeitsprüfung nicht ✖ 
+        Neuen Querschnitt wählen aufgrund des Tragfähigkeitsnachweises ✖ 
         erf W > vorh W
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
@@ -1019,10 +1404,10 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     availablei=st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']
     # degree of utilization
     degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'] *100, 2)
-    deflection = (5*st.session_state.maximum_moment*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'])
-    available_deflection =length/300
-    deflection = round(deflection,3)
-    available_deflection = round(available_deflection,3)
+    deflection = (5*(st.session_state.safe_maximum_moment_check*100)*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'])
+    available_deflection = (length*100.0)/300.0
+    deflection = round(deflection,2)
+    available_deflection = round(available_deflection,2)
     if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
         results_variant += f'''
         Durchbiegungsnachweis erfüllt ✔
@@ -1089,7 +1474,7 @@ def check_profil_wood(counter_variant, cross_section_wood_input, material_choice
             current_variant = 0
             current_variant = check_wood(counter_variant, try_profil, material_choice)
             if try_profil == "20/30" and st.session_state.counter_if_all_true != 3:
-                return st.write("Es gibt keine passende Variante als Kantholz.")
+                return st.write("Es gibt keine passende Variante als Kantholz!")
             if st.session_state.counter_if_all_true == 3:
                 break
     st.session_state.results_variant.insert(counter_variant-1, current_variant)
@@ -1106,21 +1491,35 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     weight = 0
     weight = float(st.session_state.data_storage_ipe[cross_section_ipe_input]["weightPerMeterInKG"])
     safe_weight = 0
-    safe_weight += weight
+    safe_weight += weight*length
     # convert kg in kN
-    weight = weight * length / 100
-    st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
-    st.session_state.maximum_moment_check = st.session_state.maximum_moment
+    weight = weight / 100
+    if length== position_b:
+        st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
+        st.session_state.maximum_moment_check = st.session_state.maximum_moment
+    elif length!= position_b:
+        if -st.session_state.maximum_moment_kragarm<st.session_state.maximum_moment:
+            st.session_state.safe_maximum_moment_check = st.session_state.safe_maximum_moment
+            st.session_state.maximum_moment_check = st.session_state.maximum_moment
+        else:
+            st.session_state.safe_maximum_moment_check = -st.session_state.safe_maximum_moment_kragarm
+            st.session_state.maximum_moment_check = -st.session_state.maximum_moment_kragarm
+    # for each constelation of loads a different weightcalculation
     if st.session_state.weight_calculation_option == 1:
-        st.session_state.maximum_moment_check += weight
-        st.session_state.safe_maximum_moment_check += weight
+        st.session_state.maximum_moment_check += (weight*length**2)/8
+        st.session_state.safe_maximum_moment_check += (weight*length**2)/8
     elif st.session_state.weight_calculation_option == 2:
-        st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
-        st.session_state.safe_maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] ** 2) / 2
+        st.session_state.maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] **2)/ 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.forces_array[st.session_state.maximum_moment_position_in_array]["position"] **2)/ 2
     elif st.session_state.weight_calculation_option == 3:
-        st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
-        st.session_state.safe_maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1] ** 2) / 2
-    # Bei den Momentenbestimmungen auch die Position bestimmen
+        st.session_state.maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1])**2 / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.side_and_position_max_momentum[1])**2 / 2
+    if st.session_state.maximum_moment_kragarm<st.session_state.maximum_moment and st.session_state.weight_calculation_option == 4:
+        st.session_state.maximum_moment_check += weight * (st.session_state.position)**2 / 2
+        st.session_state.safe_maximum_moment_check += weight * (st.session_state.position)**2 / 2
+    elif st.session_state.maximum_moment_kragarm>st.session_state.maximum_moment and st.session_state.weight_calculation_option == 4:   
+        st.session_state.maximum_moment_check += weight * (position_b)**2 / 2
+        st.session_state.safe_maximum_moment_check += weight * (position_b)**2 / 2
     st.session_state.maximum_moment_check = round(st.session_state.maximum_moment_check, 2)
     st.session_state.safe_maximum_moment_check = round(st.session_state.safe_maximum_moment_check, 2)
     st.session_state.needed_w = (st.session_state.maximum_moment_check * 100) / st.session_state.tension_rd[material_choice]
@@ -1128,7 +1527,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         results_variant_title = f'''Variante {counter_variant}'''
     else:
         results_variant_title = f'''alternative zu Variante {counter_variant-1}'''
-    # Zugriff auf Datenbank und Suche nach passendem W.
+    # acces the data storage to get the right W
     st.session_state.needed_i_traegheitsmoment=0
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
@@ -1138,7 +1537,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     degree_of_utilization_w = round(st.session_state.needed_w / st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']*100, 2)
     if st.session_state.needed_w > st.session_state.data_storage_ipe[cross_section_ipe_input]["available_w"]:
         results_variant = f'''
-        Das gewählte Profil besteht die Tragfähigkeitsprüfung nicht ✖
+        Neuen Querschnitt wählen aufgrund des Tragfähigkeitsnachweises ✖
         erf W > vorh W
         {st.session_state.needed_w}cm³ > {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
@@ -1146,7 +1545,7 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
         result_w=f"${neededw}cm^3 > {availablew}cm^3$"
     else:
         results_variant = f'''
-        Tragfähigkeitsprüfung erfüllt ✔
+        Tragfähigkeitsnachweis erfüllt ✔
         erf W < vorh W
         {st.session_state.needed_w}cm³ < {st.session_state.data_storage_ipe[cross_section_ipe_input]['available_w']}cm³
         η = {degree_of_utilization_w}%
@@ -1160,10 +1559,10 @@ def check_ipe(counter_variant, cross_section_ipe_input, material_choice):
     availablei=st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]
     # degree of utilization
     degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'] *100, 2)
-    deflection = (5*st.session_state.maximum_moment*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'])
-    available_deflection =length/300
-    deflection = round(deflection,3)
-    available_deflection = round(available_deflection,3)
+    deflection = (5*(st.session_state.safe_maximum_moment_check*100)*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_ipe[cross_section_ipe_input]['availableITrägheitsmoment'])
+    available_deflection = (length*100)/300
+    deflection = round(deflection,2)
+    available_deflection = round(available_deflection,2)
     if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_ipe[cross_section_ipe_input]["availableITrägheitsmoment"]:
         results_variant += f'''
         Durchbiegungsnachweis erfüllt ✔
@@ -1230,7 +1629,7 @@ def check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice):
             current_variant = 0
             current_variant = check_ipe(counter_variant, try_profil, material_choice)
             if try_profil == "IPE 600" and st.session_state.counter_if_all_true != 3:
-                return st.write("Es gibt keine passende Variante als IPE.")
+                return st.write("Es gibt keine passende Variante als IPE!")
             if st.session_state.counter_if_all_true == 3:
                 break
     st.session_state.results_variant.insert(counter_variant-1, current_variant)
@@ -1364,12 +1763,15 @@ def variant_comparison():
 with st.expander("Vergleichsansicht"):
     variant_comparison()
 # create the PDF
+if length==position_b:
+    titel="Dimensionierung Einfeldträger"
+else:
+    titel="Dimensionierung Einfeldträger mit Kragarm"
 export_as_pdf = st.button("PDF erstellen")
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'
-    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Dimensionierung Einfeldträger</a>'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">{titel}</a>'
 # write the PDF
-titel="Dimensionierung Einfeldträger"
 länge=f"Spannweite = {length}m"
 breite=f"Lasteinzugsbreite = {grid}m"
 dach=st.session_state.more_information_roof[st.session_state.selected_option]
@@ -1415,16 +1817,13 @@ if export_as_pdf:
     second_counter=0
     current_position_y=pdf.get_y()
     same_position=current_position_y
-    while second_counter<3:
+    while second_counter<2:
         if second_counter is 0:
-            pdf.set_xy(10, current_position_y)
-            pdf.image("image_normal.png", w=50)
+            pdf.set_xy(10, same_position)
+            pdf.image("image_transverse.png", w=80)
         elif second_counter is 1:
-            pdf.set_xy(70, same_position)
-            pdf.image("image_transverse.png", w=50)
-        elif second_counter is 2:
-            pdf.set_xy(130, same_position)
-            pdf.image("image_moment.png", w=50)
+            pdf.set_xy(100, same_position)
+            pdf.image("image_moment.png", w=80)
         second_counter += 1
     pdf.ln(10)
     pdf.cell(60, 5, "Auflagerreaktionen A und B", ln=True)
@@ -1435,6 +1834,9 @@ if export_as_pdf:
     pdf.ln(10)
     pdf.cell(60, 5, f"Das maximale Feldmoment beträgt {st.session_state.safe_maximum_moment} kNm und liegt bei {st.session_state.position}m.", ln=True)
     pdf.ln(10)
+    if length!=position_b:
+        pdf.cell(60, 5, f"Das Stützmoment beträgt {st.session_state.safe_maximum_moment_kragarm} kNm und liegt bei {position_b}m.", ln=True)
+        pdf.ln(10)
     counter_pictures = 0
     if st.session_state.results_variant != 0:
         for item in st.session_state.results_variant:
