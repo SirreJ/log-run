@@ -2,22 +2,24 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import base64
+
 from PIL import Image, ImageDraw, ImageFont
 from fpdf import FPDF
-import base64
+
+
 
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
 
 st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon="logo/logo.png", layout='wide')
 
-
-# erstellen eines Links
+# creating a link
 def create_link(url,text):
     return '<a href="{}" target="_blank">{}</a>'.format(url, text)
 # check if a number is even
 def is_even(number):
     return number % 2 == 0
-# Schnee- und Windlast
+# snow- and windload
 if "wind_load" not in st.session_state:
     st.session_state.wind_load = 0
 if "snow_load" not in st.session_state:
@@ -118,7 +120,7 @@ if "distributed_load_array" not in st.session_state:
     st.session_state.distributed_load_array = []
 if "counter_distributed_load" not in st.session_state:
     st.session_state.counter_distributed_load = 0
-# Auswahlmöglichkeiten für den Dachaufbau
+# choice of  roof structure
 if "selected_option" not in st.session_state:
     st.session_state.selected_option = 0
 if "selected_option_value" not in st.session_state:
@@ -186,7 +188,7 @@ def dach_aufbau():
     if option_distributed_load ==0 :
         st.session_state.distributed_load_array.pop()
         st.session_state.counter_distributed_load -=1
-#aufnahme der Streckenlasten
+# adding distributed load
 def distributed_load_information(distributed_load, counter_distributed_load):
     counter_distributed_load=st.session_state.counter_distributed_load
     if not distributed_load:
@@ -213,7 +215,7 @@ def point_load_properties(length, position, point_load, counter_forces):
     new_force = {"counter_forces": counter_forces, "point_load": point_load, "position": position}
     st.session_state.forces_array.append(new_force)
     st.session_state.counter_forces += 1
-#Auswahlmöglichkeiten für die genaue Lasteingabe
+# choice for the exact load input
 def last_auswahl():
     counter = 1
     while True:
@@ -1208,7 +1210,6 @@ with st.container(border=True):
                                 yrange = st.session_state.support_forces[1]['support_force']*0.8
                         plt.xlim()
                         plt.ylim(yrange,-yrange)
-                        plt.axis('on')
                         st.pyplot(fig)
                         plt.savefig("image_transverse.png", dpi=150, format='png')
                     draw_transverse_force_curve()
@@ -1246,7 +1247,7 @@ with st.container(border=True):
                         plt.ylim(yrange, -yrange)
                         plt.axis('on')
                         st.pyplot(fig)
-                        plt.savefig("image_moment.png", dpi=150, format='png')            
+                        plt.savefig("image_moment.png", dpi=150, format='png')                                    
                     draw_moment_curve()
         st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
         # results
@@ -1768,7 +1769,7 @@ else:
     titel="Dimensionierung Einfeldträger mit Kragarm"
 export_as_pdf = st.button("PDF erstellen")
 def create_download_link(val, filename):
-    b64 = base64.b64encode(val)  # val looks like b'...'
+    b64 = base64.b64encode(val)
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">{titel}</a>'
 # write the PDF
 länge=f"Spannweite = {length}m"
