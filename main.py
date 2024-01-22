@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import base64
+import plotly.graph_objects as go
 from PIL import Image, ImageDraw, ImageFont
 from fpdf import FPDF
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
@@ -173,6 +174,9 @@ def dach_aufbau():
     st.session_state.image_dachaufbau = Image.open(st.session_state.image_dachaufbau_auswahl)
     # Zeigen Sie den ausgewählten Wert neben der Option an
     st.write(f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²")
+    roof_q=st.session_state.selected_option_value*grid
+    roof_q=round(roof_q,2)
+    st.write(f"{st.session_state.selected_option} = {roof_q} kN/m")
     # Wert des ausgewählten Dachaufbaus
     option_distributed_load = st.session_state.selected_option_value * grid
     option_distributed_load = round(option_distributed_load, 2)
@@ -669,15 +673,17 @@ with st.container(border=True):
             with st.container():
                 col1, col2 = st.columns(2)
                 with col1:
-                    img_url_snow="zonen_karten/schnee_last_zonen.png"
-                    st.image(img_url_snow, caption="Schneelastzonen")
+                    img_url_snow="https://www.die.de/dokumentation/holzbau-dach/technik/schnee.html"
+                    img_snow="zonen_karten/schnee_last_zonen.png"
+                    st.image(img_snow, caption="Schneelastzonen")
                     text = "Hier gelangst du zur Quelle des Bilds."
                     link_html = create_link(img_url_snow,text)
                     st.markdown(link_html, unsafe_allow_html=True)
                     more_information_snow()
                 with col2:
-                    img_url_wind="zonen_karten/deutschland_karte_windzonen.png"
-                    st.image(img_url_wind, caption="Windlastzonen")
+                    img_url_wind="https://www.obo.de/produkte/schutzinstallation/produkthighlights/planungshilfen-vds-richtlinie-blitzschutzklassen-einteilung/ermitteln-der-windlast/"
+                    img_wind="zonen_karten/deutschland_karte_windzonen.png"
+                    st.image(img_wind, caption="Windlastzonen")
                     text = "Hier gelangst du zur Quelle des Bilds."
                     link_html = create_link(img_url_wind,text)
                     st.markdown(link_html, unsafe_allow_html=True)
@@ -744,7 +750,7 @@ with st.container(border=True):
                                     """,
                                 }
             st.text(st.session_state.more_information_roof[st.session_state.selected_option])
-        with st.expander("Aufbaulasten"):
+        with st.expander("technische Aufbaulasten"):
             # additional_roof_structures
             counter = 1
             counter_aufbaulasten=f"{counter}a"
@@ -777,7 +783,7 @@ with st.container(border=True):
                             break
             if  st.checkbox("hinzufügen von Aufbaulasten"):
                 build_load(counter_aufbaulasten,counter)
-        with st.expander("zusätzliche Lasten"):
+        with st.expander("individuelle Lasten"):
             st.session_state.forces_array.clear()
             st.session_state.counter_forces=0
             last_auswahl()
@@ -1163,6 +1169,7 @@ with st.container(border=True):
                 col4, col5=st.columns(2)
                 with col4:
                     def draw_transverse_force_curve():
+                        # image matplotlib
                         # systemline
                         startpoint_a = 0
                         endpoint_b = length
@@ -1199,13 +1206,26 @@ with st.container(border=True):
                                 yrange = st.session_state.support_forces[1]['support_force']*1.2
                         else:
                             if st.session_state.support_forces[0]['support_force']>st.session_state.support_forces[1]['support_force']:
-                                yrange = st.session_state.support_forces[0]['support_force']
+                                yrange = st.session_state.support_forces[0]['support_force']*1.2
                             else:
-                                yrange = st.session_state.support_forces[1]['support_force']*0.8
+                                yrange = st.session_state.support_forces[1]['support_force']*1.2
                         plt.xlim()
                         plt.ylim(yrange,-yrange)
-                        st.pyplot(fig)
                         plt.savefig("image_transverse.png", dpi=150, format='png')
+                        # image plotly
+                        fig = go.Figure()
+                        fig.update_xaxes(range=[x_values_systemline.min(), x_values_systemline.max()])
+                        fig.update_yaxes(range=[yrange, -yrange])
+                        cornflower_blue="RGB(104, 150, 236)"
+                        fig.add_trace(go.Scatter(x=x_values_systemline, y=y_values_systemline, mode='lines', name='Systemlinnie', line=dict(color="black"), showlegend=False))
+                        fig.add_trace(go.Scatter(x=x_values_closing_left, y=y_values_closing_left, mode='lines', name='closing left', line=dict(color=cornflower_blue), showlegend=False))
+                        fig.add_trace(go.Scatter(x=x_values_closing_right, y=y_values_closing_right, mode='lines', name='closing right', line=dict(color=cornflower_blue), showlegend=False))
+                        fig.add_trace(go.Scatter(x=x_smooth, y=y_smooth, mode='lines', name='Querkraftverlauf', line=dict(color=cornflower_blue), showlegend=False))
+                        fig.update_layout(title='Querkraftverlauf',
+                                        xaxis_title='Position (m)',
+                                        yaxis_title='Querkraft (kN)',
+                                        plot_bgcolor='white')
+                        st.plotly_chart(fig, use_container_width=True)
                     draw_transverse_force_curve()
                 with col5:
                     def draw_moment_curve():
@@ -1240,8 +1260,19 @@ with st.container(border=True):
                         plt.xlim()
                         plt.ylim(yrange, -yrange)
                         plt.axis('on')
-                        st.pyplot(fig)
-                        plt.savefig("image_moment.png", dpi=150, format='png')                                    
+                        plt.savefig("image_moment.png", dpi=150, format='png')
+                        # image plotly
+                        fig = go.Figure()
+                        fig.update_xaxes(range=[x_values_systemline.min(), x_values_systemline.max()])
+                        fig.update_yaxes(range=[yrange, -yrange])
+                        cornflower_blue="RGB(104, 150, 236)"
+                        fig.add_trace(go.Scatter(x=x_values_systemline, y=y_values_systemline, mode='lines', name='Systemlinie', line=dict(color="black"), showlegend=False))
+                        fig.add_trace(go.Scatter(x=x_smooth, y=y_smooth, mode='lines', name='Momentenverlauf', line=dict(color=cornflower_blue), showlegend=False))
+                        fig.update_layout(title='Momentenverlauf',
+                                        xaxis_title='Position (m)',
+                                        yaxis_title='Moment (kNm)',
+                                        plot_bgcolor='white')
+                        st.plotly_chart(fig, use_container_width=True)                                    
                     draw_moment_curve()
         st.session_state.forces_array.sort(key=lambda x: x['counter_forces'])
         # results
@@ -1469,13 +1500,14 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         '''
         result_a=f"${neededa}cm^2 > {availablea}cm^2$"  
     # saving the results  
+    counter_result=st.session_state.counter_if_all_true
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
     i_compare_wood=r"$erf I \leq vorh I$"
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A \leq vorh A$"
     a_how_wood=r"$erf A = \frac{3 \cdot maxV_{d}}{2 \cdot \tau_{Rd}}$"
-    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
+    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result}
     return result_variant_array
 # checking the profil and giving an alternativ solution
 def check_profil_wood(counter_variant, cross_section_wood_input, material_choice):
@@ -1626,13 +1658,14 @@ def check_ipe(counter_variant, cross_section_input, material_choice, data_storag
         '''
         result_a=f"${neededa}cm^2 > {availablea}cm^2$"
     # saving the results
+    counter_result=st.session_state.counter_if_all_true
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
     i_compare_wood=r"$erf I \leq vorh I$"
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A_{Steg} \leq vorh A_{Steg}$"
     a_how_wood=r"$erf A_{Steg} = \frac{maxV_{d}}{\tau_{Rd}}$"
-    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": data_storage[cross_section_input]["h"], "width":data_storage[cross_section_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a}
+    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": data_storage[cross_section_input]["h"], "width":data_storage[cross_section_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result}
     return result_variant_array
 # checking the profil and giving an alternativ solution
 def check_profil_ipe(counter_variant, cross_section_input, material_choice, data_storage):
@@ -1719,7 +1752,7 @@ if "latex_code_pictures" not in st.session_state:
     st.session_state.latex_code_pictures=[]
 def latex_to_png(latex_code, counter_pictures):
     # create a picture of LaTeX-Code
-    fig, ax = plt.subplots()
+    fg, ax = plt.subplots()
     ax.text(0.5, 0.5, latex_code, size=12, ha='center', va='center', transform=ax.transAxes)
     ax.axis('off')
     output_filename=f"latex_code{counter_pictures}.png"
@@ -1738,21 +1771,26 @@ def variant_comparison():
             counter_pictures=0
             for i, col in enumerate(dynamic_columns):
                 col.subheader(f"Variante {i+1}")
+                if st.session_state.results_variant[i]['check_result']==3:
+                    check_result="Alle Nachweise erfüllt"
+                else:
+                    check_result="Nachweise nicht erfüllt"
+                col.write(check_result)
                 col.image(st.session_state.results_variant[i]['image'])
                 col.write(f"Profil = {st.session_state.results_variant[i]['profil_text']}")
                 col.write(f"Höhe = {st.session_state.results_variant[i]['height']}cm")
                 col.write(f"Breite = {st.session_state.results_variant[i]['width']}cm")
                 col.write(f"Eigengewicht = {st.session_state.results_variant[i]['weight']}kg")
                 col.write(f"max Moment mit Eigengewicht = {st.session_state.results_variant[i]['max_moment']}kNm")
-                col.write("Tragfähigkeit:")
+                col.write("<strong>Tragfähigkeit:</strong>", unsafe_allow_html=True)
                 col.markdown(st.session_state.results_variant[i]['w_compare'])
                 col.markdown(st.session_state.results_variant[i]['w_how'])
                 col.markdown(st.session_state.results_variant[i]['result_w'])
-                col.write("Durchbiegungsnachweis:")
+                col.write("<strong>Durchbiegungsnachweis:</strong>", unsafe_allow_html=True)
                 col.markdown(st.session_state.results_variant[i]['i_compare'])
                 col.markdown(st.session_state.results_variant[i]['i_how'])
                 col.markdown(st.session_state.results_variant[i]['result_i']) 
-                col.write("Schubnachweis:")
+                col.write("<strong>Schubnachweis:</strong>", unsafe_allow_html=True)
                 col.markdown(st.session_state.results_variant[i]['a_compare'])
                 col.markdown(st.session_state.results_variant[i]['a_how'])
                 col.markdown(st.session_state.results_variant[i]['result_a'])
@@ -1777,6 +1815,7 @@ def variant_comparison():
                 counter_pictures+=1
                 add_variant_list=[
                 f"""Variante {i+1}
+                {check_result}
                 Profil: {st.session_state.results_variant[i]['profil_text']}
                 Höhe: {st.session_state.results_variant[i]['height']}cm
                 Breite: {st.session_state.results_variant[i]['width']}cm
