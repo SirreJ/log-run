@@ -6,7 +6,7 @@ import base64
 from PIL import Image, ImageDraw, ImageFont
 from fpdf import FPDF
 # Der hier verwendete Code war zuvor eine HTML Seite mit JavaScript Code und wurde zu Python übersetzt und weiter angepasst.
-st.set_page_config(page_title="Dimensionierung Einfeldträger", page_icon="logo/logo.png", layout='wide')
+st.set_page_config(page_title="log-run", page_icon="logo/logo.png", layout='wide')
 # creating a link
 def create_link(url,text):
     return '<a href="{}" target="_blank">{}</a>'.format(url, text)
@@ -647,7 +647,7 @@ with st.container():
         st.image("logo/logo_mit_text.png",width=300)
     with col2:
         st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems eines Einfeldträgers genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden.")
-        st.write("Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
+        st.write("Zur Dimensionierung genutzte Tabellen stammen aus dem Buch Tabellen zur Tragwerklehre 12. Auflage des Verlags Rudolf Müller von den Autoren Univ.-Prof. em. Dr.-Ing. Franz Krauss, Univ.-Prof. em. Dr.-Ing. Wilfried Führer und Prof. Dr.-Ing.Thomas Jürges. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
 # static system
 with st.container(border=True):
     col1, col3 = st.columns(2)
