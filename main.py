@@ -214,15 +214,14 @@ def point_load_properties(length, position, point_load, counter_forces):
     st.session_state.forces_array.append(new_force)
     st.session_state.counter_forces += 1
 # choice for the exact load input
-def last_auswahl():
+def load_choice():
     counter = 1
     while True:
-        # st.radio für die Auswahl von "Streckenlast" oder "Punktlast"
-        # Weisen Sie eindeutige Schlüssel mit dem Zähler zu
+        # st.radio to chose between pointload and distributed load
         load_type = st.radio("Lasteingabe", ["Streckenlast", "Punktlast"], key=f"load_type_{counter}")
         if load_type == "Streckenlast":
             with st.container():
-                    # st.text_input für die Streckenelast mit einem eindeutigen Schlüssel
+                    # st.text_input for a distributed load with a unique key
                     distributed_load_input = st.text_input("Streckenelast (kN/m)", key=f"distributed_load_{counter}")
                     distributed_load = float(distributed_load_input) if distributed_load_input else 0
                     distributed_load_information(distributed_load, st.session_state.counter_distributed_load)
@@ -786,7 +785,7 @@ with st.container(border=True):
         with st.expander("individuelle Lasten"):
             st.session_state.forces_array.clear()
             st.session_state.counter_forces=0
-            last_auswahl()
+            load_choice()
         st.session_state.side_and_position_max_momentum.clear()
         do_calculations_system()
     with col3:
@@ -1302,6 +1301,20 @@ if "data_storage_wood" not in st.session_state:
         st.session_state.data_storage_wood[key] = values
         # sorting the values by the area
         st.session_state.data_storage_wood = dict(sorted(st.session_state.data_storage_wood.items(), key=lambda item: item[1]['availableArea']))
+if "bsh_data" not in st.session_state:
+    st.session_state.bsh_data = pd.read_excel('tabellen/Tabelle_BSH.xlsx')
+if "data_storage_bsh" not in st.session_state:
+    st.session_state.data_storage_bsh = {}
+    # create datastorage for bsh
+    for rows in st.session_state.bsh_data.iterrows():
+        key = f"{int(rows[1]['h'])}"
+        values = {
+            "h": rows[1]['h'],
+            "availableArea": rows[1]['A'],
+            "availableITrägheitsmoment": int(rows[1]['I']),
+            "available_w": rows[1]['W']
+        }
+        st.session_state.data_storage_bsh[key] = values
 if "ipe_data" not in st.session_state:
     st.session_state.ipe_data = pd.read_excel('tabellen/Tabelle_IPE.xlsx')
 if "data_storage_ipe" not in st.session_state:
@@ -1340,7 +1353,8 @@ if "tension_rd" not in st.session_state:
     st.session_state.tension_rd = {
         "IPE": 21.8,
         "IPB": 21.8,
-        "Kantholz": 1.5
+        "Kantholz": 1.5,
+        "Brettschichtholz": 1.5
     }
 if "needed_w" not in st.session_state: 
     st.session_state.needed_w = 0
@@ -1348,19 +1362,22 @@ if "number_k0" not in st.session_state:
     st.session_state.number_k0 = {
         "IPE": 15,
         "IPB": 15,
-        "Kantholz": 312
+        "Kantholz": 312,
+        "Brettschichtholz": 312
     }
 if "schub_rd" not in st.session_state:
     st.session_state.schub_rd = {
         "IPE": 12.6,
         "IPB": 12.6,
-        "Kantholz": 0.12
+        "Kantholz": 0.12,
+        "Brettschichtholz": 0.12
     }
 if "e_modul" not in st.session_state:
     st.session_state.e_modul = {
         "IPE": 21000,
         "IPB": 21000,
-        "Kantholz": 1100
+        "Kantholz": 1100,
+        "Brettschichtholz": 1100
     }
 if "maximum_moment_check" not in st.session_state:
     st.session_state.maximum_moment_check = 0
@@ -1375,10 +1392,13 @@ if "needed_area" not in st.session_state:
 if "counter_if_all_true" not in st.session_state:
     st.session_state.counter_if_all_true = 0
 # checking the profil
-def check_wood(counter_variant, cross_section_wood_input, material_choice):
+def check_wood(counter_variant, cross_section_wood_input, material_choice, width):
     st.session_state.counter_if_all_true=0
     weight = 0
-    weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
+    if material_choice=="Brettschichtholz":
+        weight = 5*(float(width)/100)*(float(st.session_state.data_storage_bsh[cross_section_wood_input]["h"])/100)
+    else:
+        weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
     safe_weight = 0
     safe_weight += weight*length
     safe_weight = round(safe_weight,2)
@@ -1394,7 +1414,6 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         else:
             st.session_state.safe_maximum_moment_check = -st.session_state.safe_maximum_moment_kragarm
             st.session_state.maximum_moment_check = -st.session_state.maximum_moment_kragarm
-
     # for each constelation of loads a different weightcalculation
     if st.session_state.weight_calculation_option == 1:
         st.session_state.maximum_moment_check += (weight*length**2)/8
@@ -1424,14 +1443,17 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     st.session_state.needed_area=0
     st.session_state.needed_w = round(st.session_state.needed_w, 2)
     neededw=st.session_state.needed_w
-    availablew=st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]
+    if material_choice=="Brettschichtholz":
+        availablew=st.session_state.data_storage_bsh[cross_section_wood_input]["available_w"]*float(width)
+    else:
+        availablew=st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]
     # degree of utilization
-    degree_of_utilization_w = round(st.session_state.needed_w / st.session_state.data_storage_wood[cross_section_wood_input]['available_w'] *100, 2)
-    if st.session_state.needed_w > st.session_state.data_storage_wood[cross_section_wood_input]["available_w"]:
+    degree_of_utilization_w = round(st.session_state.needed_w / availablew *100, 2)
+    if st.session_state.needed_w > availablew:
         results_variant = f'''
         Neuen Querschnitt wählen aufgrund des Tragfähigkeitsnachweises ✖ 
         erf W > vorh W
-        {st.session_state.needed_w}cm³ > {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+        {st.session_state.needed_w}cm³ > {availablew}cm³
         η = {degree_of_utilization_w}%
         '''
         result_w=f"${neededw}cm^3 > {availablew}cm^3$"
@@ -1439,7 +1461,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         results_variant = f'''
         Tragfähigkeitsprüfung erfüllt ✔
         erf W < vorh W
-        {st.session_state.needed_w}cm³ < {st.session_state.data_storage_wood[cross_section_wood_input]['available_w']}cm³
+        {st.session_state.needed_w}cm³ < {availablew}cm³
         η = {degree_of_utilization_w}%
         '''
         st.session_state.counter_if_all_true += 1
@@ -1448,18 +1470,21 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     st.session_state.needed_i_traegheitsmoment = st.session_state.number_k0[material_choice] * (st.session_state.safe_maximum_moment_check/100) * (length * 100)
     st.session_state.needed_i_traegheitsmoment = round(st.session_state.needed_i_traegheitsmoment, 2)
     neededi=st.session_state.needed_i_traegheitsmoment
-    availablei=st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']
+    if material_choice=="Brettschichtholz":
+        availablei=st.session_state.data_storage_bsh[cross_section_wood_input]["availableITrägheitsmoment"]*float(width)
+    else:
+        availablei=st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']
     # degree of utilization
-    degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'] *100, 2)
-    deflection = (5*(st.session_state.safe_maximum_moment_check*100)*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment'])
+    degree_of_utilization_i = round(st.session_state.needed_i_traegheitsmoment / availablei *100, 2)
+    deflection = (5*(st.session_state.safe_maximum_moment_check*100)*((length*100)**2))/(48*st.session_state.e_modul[material_choice]*availablei)
     available_deflection = (length*100.0)/300.0
     deflection = round(deflection,2)
     available_deflection = round(available_deflection,2)
-    if st.session_state.needed_i_traegheitsmoment <= st.session_state.data_storage_wood[cross_section_wood_input]["availableITrägheitsmoment"]:
+    if st.session_state.needed_i_traegheitsmoment <= availablei:
         results_variant += f'''
         Durchbiegungsnachweis erfüllt ✔
         erf I < vorh I
-        {st.session_state.needed_i_traegheitsmoment}cm^4 < {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        {st.session_state.needed_i_traegheitsmoment}cm^4 < {availablei}cm^4
         erf Durchbiegung < l/300
         {deflection}cm < {available_deflection}cm
         η = {degree_of_utilization_i}%
@@ -1470,24 +1495,27 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Gebrauchstauglichkeitsnachweises ✖
         erf I > vorh I
-        {st.session_state.needed_i_traegheitsmoment}cm^4 > {st.session_state.data_storage_wood[cross_section_wood_input]['availableITrägheitsmoment']}cm^4
+        {st.session_state.needed_i_traegheitsmoment}cm^4 > {availablei}cm^4
         erf Durchbiegung > l/300
         {deflection}cm > {available_deflection}cm
         η = {degree_of_utilization_i}%
         '''
         result_i=f"${neededi}cm^4 > {availablei}cm^4$"     
-    # Schubnachweis mit Sicherheitsbeiwert von 1.4
+    # proof of thrust with safety factor of 1.4
     st.session_state.needed_area = ((3 * st.session_state.max_v)* 1.4) / (2 * st.session_state.schub_rd[material_choice])
     st.session_state.needed_area = round(st.session_state.needed_area, 2)
     neededa=st.session_state.needed_area
-    availablea=st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']
+    if material_choice=="Brettschichtholz":
+        availablea=st.session_state.data_storage_bsh[cross_section_wood_input]["availableArea"]*float(width)
+    else:
+        availablea=st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']
     # degree of utilization
-    degree_of_utilization_a = round(st.session_state.needed_area / st.session_state.data_storage_wood[cross_section_wood_input]['availableArea'] *100, 2)
-    if st.session_state.needed_area <= st.session_state.data_storage_wood[cross_section_wood_input]["availableArea"]:
+    degree_of_utilization_a = round(st.session_state.needed_area / availablea *100, 2)
+    if st.session_state.needed_area <= availablea:
         results_variant += f'''
         Schubnachweis erfüllt ✔
         erf A < vorh A
-        {st.session_state.needed_area}cm² < {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+        {st.session_state.needed_area}cm² < {availablea}cm²
         η = {degree_of_utilization_a}%
         '''
         st.session_state.counter_if_all_true += 1
@@ -1496,11 +1524,16 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
         results_variant += f'''
         Neuen Querschnitt wählen aufgrund des Schubnachweises ✖
         erf A > vorh A
-        {st.session_state.needed_area}cm² > {st.session_state.data_storage_wood[cross_section_wood_input]['availableArea']}cm²
+        {st.session_state.needed_area}cm² > {availablea}cm²
         η = {degree_of_utilization_a}%
         '''
         result_a=f"${neededa}cm^2 > {availablea}cm^2$"  
     # saving the results  
+    if material_choice is not "Brettschichtholz":
+        width=st.session_state.data_storage_wood[cross_section_wood_input]["b"]
+        height=st.session_state.data_storage_wood[cross_section_wood_input]["h"]
+    else:
+        height=st.session_state.data_storage_bsh[cross_section_wood_input]["h"]
     counter_result=st.session_state.counter_if_all_true
     w_compare_wood=r"$erf W \leq vorh W$"
     w_how_wood=r"$erf W = \frac{max M_{d}}{\sigma_{Rd}}$"
@@ -1508,30 +1541,39 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A \leq vorh A$"
     a_how_wood=r"$erf A = \frac{3 \cdot maxV_{d}}{2 \cdot \tau_{Rd}}$"
-    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": st.session_state.data_storage_wood[cross_section_wood_input]["h"], "width":st.session_state.data_storage_wood[cross_section_wood_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result}
+    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": height, "width":width, "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result}
     return result_variant_array
 # checking the profil and giving an alternativ solution
-def check_profil_wood(counter_variant, cross_section_wood_input, material_choice):
+def check_profil_wood(counter_variant, cross_section_wood_input, material_choice, width):
     # result of the input
-    st.session_state.results_variant.insert(counter_variant-1, check_wood(counter_variant, cross_section_wood_input, material_choice))
+    st.session_state.results_variant.insert(counter_variant-1, check_wood(counter_variant, cross_section_wood_input, material_choice, width))
     # better result
     counter_variant += 1
     st.session_state.counter_if_all_true=0
     while st.session_state.counter_if_all_true < 3:
-        for try_profil in st.session_state.data_storage_wood:
-            current_variant = 0
-            current_variant = check_wood(counter_variant, try_profil, material_choice)
-            if try_profil == "20/30" and st.session_state.counter_if_all_true != 3:
-                return st.write("Es gibt keine passende Variante als Kantholz!")
-            if st.session_state.counter_if_all_true == 3:
-                break
+        if material_choice == "Kantholz":
+            for try_profil in st.session_state.data_storage_wood:
+                current_variant = 0
+                current_variant = check_wood(counter_variant, try_profil, material_choice, width)
+                if try_profil == "20/30" and st.session_state.counter_if_all_true != 3:
+                    return st.write("Es gibt keine passende Variante als Kantholz!")
+                if st.session_state.counter_if_all_true == 3:
+                    break
+        elif material_choice == "Brettschichtholz":
+            for try_profil in st.session_state.data_storage_bsh:
+                current_variant = 0
+                current_variant = check_wood(counter_variant, try_profil, material_choice, width)
+                if try_profil == "270"and st.session_state.counter_if_all_true != 3:
+                    return st.write("Es gibt keine passende Variante als Brettschichtholz!")
+                if st.session_state.counter_if_all_true == 3:
+                    break
     st.session_state.results_variant.insert(counter_variant-1, current_variant)
 if "image_profil_list" not in st.session_state:
     st.session_state.image_profil_list = {
         'Kantholz':'material_profil/Pikto_Kantholz.png',
+        'Brettschichtholz':'material_profil/Pikto_bsh.png',
         'IPE':'material_profil/Pikto_IPE.png',
         'IPB':'material_profil/Pikto_IPE.png'
-
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
@@ -1695,7 +1737,7 @@ def next_variant():
                 col1, col2 = st.columns(2)
                 with col1:
                     st.subheader(f"Variante {counter_variant}")
-                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "IPE", "IPB"])
+                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "Brettschichtholz", "IPE", "IPB"])
                     st.text(f"Profil {counter_variant}")
                     if material_choice == "Kantholz":  
                         key_list = list(st.session_state.data_storage_wood.keys())
@@ -1704,7 +1746,8 @@ def next_variant():
                         st.session_state.image_profil_safe = image_profil
                         col2.image(image_profil)
                         cross_section_wood_input = st.selectbox(f"Querschnitt {counter_variant} (b/h)", key_list)
-                        check_profil_wood(counter_variant, cross_section_wood_input, material_choice)
+                        width=1
+                        check_profil_wood(counter_variant, cross_section_wood_input, material_choice, width)
                     elif material_choice == "IPE":
                         key_list = list(st.session_state.data_storage_ipe.keys())
                         cross_section_ipe_input = st.selectbox(f"Profil {counter_variant}", key_list)
@@ -1721,6 +1764,22 @@ def next_variant():
                         st.session_state.image_profil_safe = image_profil
                         col2.image(image_profil)
                         check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice, st.session_state.data_storage_ipb)
+                    elif material_choice == "Brettschichtholz":
+                        key_list = list(st.session_state.data_storage_bsh.keys())
+                        image_profil_choice = st.session_state.image_profil_list[material_choice]
+                        image_profil = Image.open(image_profil_choice)
+                        st.session_state.image_profil_safe = image_profil
+                        col2.image(image_profil)
+                        cross_section_wood_input = st.selectbox(f"Querschnitt {counter_variant} (h)", key_list)
+                        width = st.text_input(label="Breite (cm)",key=counter_variant)
+                        if not width:
+                            st.error("Bitte gib eine Zahl ein.")
+                            return
+                        else:
+                            if (float(width)*12) < float(cross_section_wood_input):
+                                st.error("Die Breite ist zu schmal.")
+                                return
+                        check_profil_wood(counter_variant, cross_section_wood_input, material_choice, width)
                     # increase counter
                     counter_variant += 2
                     # checkbox for the next variant
@@ -1738,6 +1797,8 @@ with st.container(border=True):
             st.write(st.session_state.ipe_data)
         with st.expander("Tabelle IPB"):
             st.write(st.session_state.ipb_data)
+        with st.expander("Tabelle Brettschichtholz"):
+            st.write(st.session_state.bsh_data)
         st.session_state.results_variant.clear()
         if st.checkbox("Variante 1"):
             next_variant()
