@@ -1302,7 +1302,7 @@ if "data_storage_wood" not in st.session_state:
         # sorting the values by the area
         st.session_state.data_storage_wood = dict(sorted(st.session_state.data_storage_wood.items(), key=lambda item: item[1]['availableArea']))
 if "bsh_data" not in st.session_state:
-    st.session_state.bsh_data = pd.read_excel('tabellen/Tabelle_BSH.xlsx')
+    st.session_state.bsh_data = pd.read_excel('tabellen/Tabelle_bsh.xlsx')
 if "data_storage_bsh" not in st.session_state:
     st.session_state.data_storage_bsh = {}
     # create datastorage for bsh
