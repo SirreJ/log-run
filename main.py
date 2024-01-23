@@ -1381,6 +1381,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice):
     weight = float(st.session_state.data_storage_wood[cross_section_wood_input]["weightPerMeterInKG"])
     safe_weight = 0
     safe_weight += weight*length
+    safe_weight = round(safe_weight,2)
     # convert kg in kN
     weight = weight / 100
     if length== position_b:
@@ -1541,6 +1542,7 @@ def check_ipe(counter_variant, cross_section_input, material_choice, data_storag
     weight = float(data_storage[cross_section_input]["weightPerMeterInKG"])
     safe_weight = 0
     safe_weight += weight*length
+    safe_weight = round(safe_weight,2)
     # convert kg in kN
     weight = weight / 100
     if length== position_b:
