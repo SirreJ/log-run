@@ -220,14 +220,14 @@ def load_choice():
         if load_type == "Streckenlast":
             with st.container():
                     # st.text_input for a distributed load with a unique key
-                    distributed_load_input = st.text_input("Streckenelast (kN/m)", key=f"distributed_load_{counter}")
+                    distributed_load_input = st.text_input("Streckenelast (kN/m)", key=f"distributed_load_{counter}",placeholder="z.B. 3.5")
                     distributed_load = float(distributed_load_input) if distributed_load_input else 0
                     distributed_load_information(distributed_load, st.session_state.counter_distributed_load)
         elif load_type == "Punktlast":
             with st.container():
                 col1, col2 = st.columns(2)
                 with col1:
-                    point_load_input = st.text_input("Punktlast (kN)", key=f"point_load_{counter}")
+                    point_load_input = st.text_input("Punktlast (kN)", key=f"point_load_{counter}",placeholder="z.B. 1.7")
                 with col2:
                     position_input = st.slider("Position (m)", min_value = 0.0, max_value = length, value = 0.0, step = 0.1, help="Die Position ist die Entfernung der Punktlast von Auflager A.", key=f"position_{counter}")
                     point_load = float(point_load_input) if point_load_input else 0
@@ -1329,34 +1329,32 @@ if "data_storage_ipe" not in st.session_state:
         values = {
             "b": rows[1]['b'],
             "h": rows[1]['h'],
-            "availableArea": rows[1]['A'],
             "weightPerMeterInKG": rows[1]['G'],
             "availableITrägheitsmoment": int(rows[1]['I']),
             "available_w": rows[1]['W'],
             "available_area_steg":rows[1]['Asteg']
         }
         st.session_state.data_storage_ipe[key] = values
-if "ipb_data" not in st.session_state:
-    st.session_state.ipb_data = pd.read_excel('tabellen/Tabelle_IPB_HE_B.xlsx')
-if "data_storage_ipb" not in st.session_state:
-    st.session_state.data_storage_ipb = {}
-    # create datastorage for IPB.
+if "heb_data" not in st.session_state:
+    st.session_state.heb_data = pd.read_excel('tabellen/Tabelle_HEB.xlsx')
+if "data_storage_heb" not in st.session_state:
+    st.session_state.data_storage_heb = {}
+    # create datastorage for HEB.
     for rows in st.session_state.ipe_data.iterrows():
-        key = f"IPB {int(rows[1]['h']*10)}"
+        key = f"HEB {int(rows[1]['h']*10)}"
         values = {
             "b": rows[1]['b'],
             "h": rows[1]['h'],
-            "availableArea": rows[1]['A'],
             "weightPerMeterInKG": rows[1]['G'],
             "availableITrägheitsmoment": int(rows[1]['I']),
             "available_w": rows[1]['W'],
             "available_area_steg":rows[1]['Asteg']
         }
-        st.session_state.data_storage_ipb[key] = values
+        st.session_state.data_storage_heb[key] = values
 if "tension_rd" not in st.session_state: 
     st.session_state.tension_rd = {
         "IPE": 21.8,
-        "IPB": 21.8,
+        "HEB": 21.8,
         "Kantholz": 1.5,
         "Brettschichtholz": 1.5
     }
@@ -1365,21 +1363,21 @@ if "needed_w" not in st.session_state:
 if "number_k0" not in st.session_state:
     st.session_state.number_k0 = {
         "IPE": 15,
-        "IPB": 15,
+        "HEB": 15,
         "Kantholz": 312,
         "Brettschichtholz": 312
     }
 if "schub_rd" not in st.session_state:
     st.session_state.schub_rd = {
         "IPE": 12.6,
-        "IPB": 12.6,
+        "HEB": 12.6,
         "Kantholz": 0.12,
         "Brettschichtholz": 0.12
     }
 if "e_modul" not in st.session_state:
     st.session_state.e_modul = {
         "IPE": 21000,
-        "IPB": 21000,
+        "HEB": 21000,
         "Kantholz": 1100,
         "Brettschichtholz": 1100
     }
@@ -1577,7 +1575,7 @@ if "image_profil_list" not in st.session_state:
         'Kantholz':'material_profil/Pikto_Kantholz.png',
         'Brettschichtholz':'material_profil/Pikto_bsh.png',
         'IPE':'material_profil/Pikto_IPE.png',
-        'IPB':'material_profil/Pikto_IPB.png'
+        'HEB':'material_profil/Pikto_HEB.png'
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
@@ -1688,7 +1686,7 @@ def check_ipe(counter_variant, cross_section_input, material_choice, data_storag
     neededa=st.session_state.needed_area
     availablea=data_storage[cross_section_input]["available_area_steg"]
     # degree of utilization
-    degree_of_utilization_a = round(st.session_state.needed_area / data_storage[cross_section_input]['availableArea'] *100, 2)
+    degree_of_utilization_a = round(st.session_state.needed_area / data_storage[cross_section_input]['available_area_steg'] *100, 2)
     if st.session_state.needed_area <= data_storage[cross_section_input]["available_area_steg"]:
         results_variant += f'''
         Schubnachweis erfüllt ✔
@@ -1729,8 +1727,8 @@ def check_profil_ipe(counter_variant, cross_section_input, material_choice, data
             current_variant = check_ipe(counter_variant, try_profil, material_choice, data_storage)
             if try_profil == "IPE 600" and st.session_state.counter_if_all_true != 3:
                 return st.write("Es gibt keine passende Variante als IPE!")
-            if try_profil == "IPB 1000" and st.session_state.counter_if_all_true != 3:
-                return st.write("Es gibt keine passende Variante als IPB!")
+            if try_profil == "HEB 1000" and st.session_state.counter_if_all_true != 3:
+                return st.write("Es gibt keine passende Variante als HEB!")
             if st.session_state.counter_if_all_true == 3:
                 break
     st.session_state.results_variant.insert(counter_variant-1, current_variant)
@@ -1742,7 +1740,7 @@ def next_variant():
                 col1, col2 = st.columns(2)
                 with col1:
                     st.subheader(f"Variante {counter_variant}")
-                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "Brettschichtholz", "IPE", "IPB"])
+                    material_choice = st.selectbox(f"Material {counter_variant}", ["Kantholz", "Brettschichtholz", "IPE", "HEB"])
                     st.text(f"Profil {counter_variant}")
                     if material_choice == "Kantholz":  
                         key_list = list(st.session_state.data_storage_wood.keys())
@@ -1761,14 +1759,14 @@ def next_variant():
                         st.session_state.image_profil_safe = image_profil
                         col2.image(image_profil)
                         check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice, st.session_state.data_storage_ipe)
-                    elif material_choice == "IPB":
-                        key_list = list(st.session_state.data_storage_ipb.keys())
+                    elif material_choice == "HEB":
+                        key_list = list(st.session_state.data_storage_heb.keys())
                         cross_section_ipe_input = st.selectbox(f"Profil {counter_variant}", key_list)
                         image_profil_choice = st.session_state.image_profil_list[material_choice]
                         image_profil = Image.open(image_profil_choice)
                         st.session_state.image_profil_safe = image_profil
                         col2.image(image_profil)
-                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice, st.session_state.data_storage_ipb)
+                        check_profil_ipe(counter_variant, cross_section_ipe_input, material_choice, st.session_state.data_storage_heb)
                     elif material_choice == "Brettschichtholz":
                         key_list = list(st.session_state.data_storage_bsh.keys())
                         image_profil_choice = st.session_state.image_profil_list[material_choice]
@@ -1801,8 +1799,8 @@ with st.container(border=True):
             st.write(st.session_state.wood_data)
         with st.expander("Tabelle IPE"):
             st.write(st.session_state.ipe_data)
-        with st.expander("Tabelle IPB"):
-            st.write(st.session_state.ipb_data)
+        with st.expander("Tabelle HEB"):
+            st.write(st.session_state.heb_data)
         with st.expander("Tabelle Brettschichtholz"):
             st.write(st.session_state.bsh_data)
         st.session_state.results_variant.clear()
