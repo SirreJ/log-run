@@ -1578,7 +1578,7 @@ if "image_profil_list" not in st.session_state:
         'Kantholz':'material_profil/Pikto_Kantholz.png',
         'Brettschichtholz':'material_profil/Pikto_bsh.png',
         'IPE':'material_profil/Pikto_IPE.png',
-        'IPB':'material_profil/Pikto_IPE.png'
+        'IPB':'material_profil/Pikto_IPB.png'
     }
 if "image_profil_safe" not in st.session_state:
     st.session_state.image_profil_safe = 0
