@@ -142,7 +142,7 @@ def image_length_grid_place(length, grid):
 if "image_dachaufbau" not in st.session_state:
     st.session_state.image_dachaufbau = 0
 def dach_aufbau():
-    # Dictionary mit den Werten für jede Dachaufbauoption
+    # dictionary  with values of each roofoption
     extensive_dachbegrünung = st.session_state.layer_load_roof['extensive Dachbegrünung 10cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
     intensive_dachbegrünung = st.session_state.layer_load_roof['intensive Dachbegrünung 20cm'] + st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
     leichter_dachaufbau = st.session_state.layer_load_roof['zweilagige Dachabdichtung'] + st.session_state.layer_load_roof['Dämmstoff 20cm'] + st.session_state.layer_load_roof['Dampfsperre'] + st.session_state.layer_load_roof['Trapezblech']
@@ -158,7 +158,7 @@ def dach_aufbau():
         "leichter Dachaufbau": leichter_dachaufbau,
         "schwerer Dachaufbau": schwerer_dachaufbau
     }
-    # Bilder Liste
+    #  image list of each roof structure
     image_dachaufbau_list = {
         'extensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_extensiv.png',
         'intensive Dachbegrünung':'dachaufbau/Pikto_Dachaufbau_intensiv.png',
@@ -166,18 +166,18 @@ def dach_aufbau():
         'schwerer Dachaufbau':'dachaufbau/Pikto_Dachaufbau_schwer.png',
         'kein Dachaufbau':'dachaufbau/Pikto_kein_Dachaufbau.png'
     }
-    # st.selectbox für die Auswahl des Dachaufbaus
+    # st.selectbox for the roof choice
     st.session_state.selected_option = st.selectbox("Dachaufbau", list(option_values.keys()))
     st.session_state.selected_option_value = option_values[st.session_state.selected_option]
-    # Passendes Bild Laden
+    # loading the right image
     st.session_state.image_dachaufbau_auswahl = image_dachaufbau_list[st.session_state.selected_option]
     st.session_state.image_dachaufbau = Image.open(st.session_state.image_dachaufbau_auswahl)
-    # Zeigen Sie den ausgewählten Wert neben der Option an
+    # display the load of the chosen option
     st.write(f"{st.session_state.selected_option} = {st.session_state.selected_option_value} kN/m²")
     roof_q=st.session_state.selected_option_value*grid
     roof_q=round(roof_q,2)
     st.write(f"{st.session_state.selected_option} = {roof_q} kN/m")
-    # Wert des ausgewählten Dachaufbaus
+    # values of the chosen roof structure
     option_distributed_load = st.session_state.selected_option_value * grid
     option_distributed_load = round(option_distributed_load, 2)
     new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
@@ -238,7 +238,7 @@ def load_choice():
         # Erhöhen Sie den Zähler für den nächsten Satz von Widgets
         counter += 1
         # st.checkbox für die Entscheidung, ob weitere Eingaben gemacht werden sollen
-        checkbox_label = "weitere Lasteingabe ({})".format(counter)
+        checkbox_label = "weitere Lasteingabe".format(counter)
         # Eindeutiger Schlüssel für die Checkbox
         if not st.checkbox(checkbox_label, key=f"checkbox_{counter}"):
             break
@@ -649,7 +649,7 @@ with st.container():
     with col1:
         st.image("logo/logo_mit_text.png",width=300)
     with col2:
-        st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems eines Einfeldträgers genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden.")
+        st.write("Dieses Programm wird zur analytischen Berechnung des statischen Systems von Einfeldträgern und Einfeldträgern mit Kragarm genutzt. Im Anschluss kann die Dimensionierung eines Einfeldträgers anhand von Tabellenwerten vorgenommen werden. Darauf folgt ein Anzeigebereich, in der die unterschiedliche Profile miteinander verglichen werden können. Schließlich können die Ergebnisse als PDF ausgegeben und heruntergeladen werden.")
         st.write("Zur Dimensionierung genutzte Tabellen stammen aus dem Buch Tabellen zur Tragwerklehre 12. Auflage des Verlags Rudolf Müller von den Autoren Univ.-Prof. em. Dr.-Ing. Franz Krauss, Univ.-Prof. em. Dr.-Ing. Wilfried Führer und Prof. Dr.-Ing.Thomas Jürges. Die Schnee- und Windlasten sind standartmäßig für ein Gebäude in Aachen mit einer Gebäudehöhe von unter 10m eingestellt. Holzprofile werden mit den Werten für C24 Nadelholz nach DIN EN 338 berechnet. Stahlprofile werden mit den Werten für St 37 (S235) Baustahl berechnet.")
 # static system
 with st.container(border=True):
@@ -690,6 +690,9 @@ with st.container(border=True):
             with st.container():
                 st.session_state.counter_distributed_load = 0
                 st.session_state.distributed_load_array.clear()
+                snow_and_wind_load=(float(st.session_state.snow_load)+float(st.session_state.wind_load))*grid
+                snow_and_wind_load=round(snow_and_wind_load,2)
+                st.write(f"Wind- und Schneelast: {snow_and_wind_load}kN/m")
                 checkbox_label = "Hinzufügen der Wind- und Schneelast"
                 snow_wind_check=st.checkbox(checkbox_label, key="wind_snow")
                 if snow_wind_check:
@@ -766,10 +769,13 @@ with st.container(border=True):
                         # st.selectbox für die Auswahl des Dachaufbaus
                         st.session_state.selected_option_extra = st.selectbox("Aufbaulasten", list(option_values.keys()), key=counter_aufbaulasten)
                         st.session_state.selected_option_extra_value = option_values[st.session_state.selected_option_extra]
-                        # Zeigen Sie den ausgewählten Wert neben der Option an
+                        # load of the chosen option
                         st.write(f"{st.session_state.selected_option_extra} = {st.session_state.selected_option_extra_value} kN/m²")
+                        distributed_load_option=float(st.session_state.selected_option_extra_value)*grid
+                        distributed_load_option=round(distributed_load_option,2)
+                        st.write(f"{st.session_state.selected_option_extra} = {distributed_load_option} kN/m")
                         # Wert des ausgewählten Dachaufbaus
-                        st.session_state.additional_roof_structures.append(f"{st.session_state.selected_option_extra} = {st.session_state.selected_option_extra_value} kN/m²")
+                        st.session_state.additional_roof_structures.append(f"{st.session_state.selected_option_extra} = {distributed_load_option} kN/m²")
                         option_distributed_load = st.session_state.selected_option_extra_value * grid
                         option_distributed_load = round(option_distributed_load, 2)
                         new_distributed_load = {"counter_distributed_load" : st.session_state.counter_distributed_load, "distributed_load" : option_distributed_load}
@@ -782,7 +788,7 @@ with st.container(border=True):
                             break
             if  st.checkbox("hinzufügen von Aufbaulasten"):
                 build_load(counter_aufbaulasten,counter)
-        with st.expander("individuelle Lasten"):
+        with st.expander("zusätzliche Lasten"):
             st.session_state.forces_array.clear()
             st.session_state.counter_forces=0
             load_choice()
@@ -813,7 +819,6 @@ with st.container(border=True):
                 ax.plot(x_values_systemline, y_values_systemline, marker=',', linestyle='-', color='black')
                 text2=length-position_b
                 text2=round(text2,2)
-                st.write(text2)
                 plt.text(startpoint_a+position_b+((length-position_b)/2), middle_of_canvas_y-3-0.5, f'{text2}m', fontsize=8, color='black', ha='center', va='center')
             # supports
             # fixed support
@@ -1791,6 +1796,7 @@ with st.container(border=True):
     col1, col3 = st.columns(2)
     with col1:
         st.header("Profilauswahl")
+        st.subheader("Zur Dimensionierung verwendete Tabellen:")
         with st.expander("Tabelle Kantholz"):
             st.write(st.session_state.wood_data)
         with st.expander("Tabelle IPE"):
@@ -1800,6 +1806,7 @@ with st.container(border=True):
         with st.expander("Tabelle Brettschichtholz"):
             st.write(st.session_state.bsh_data)
         st.session_state.results_variant.clear()
+        st.subheader("Varianten Eingabe:")
         if st.checkbox("Variante 1"):
             next_variant()
     with col3:
@@ -1898,6 +1905,8 @@ if length==position_b:
     titel="Dimensionierung Einfeldträger"
 else:
     titel="Dimensionierung Einfeldträger mit Kragarm"
+st.write("Die Seite kann oben rechts im Optionsmenu gedruckt werden.")
+st.write("Wenn die Werte ohne das Layout der Seite gewünscht ist, kann eine PDF mit dem unten steheden Knopf erzeugt werden.")
 export_as_pdf = st.button("PDF erstellen")
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)
