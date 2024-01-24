@@ -1546,7 +1546,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice, width
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A \leq vorh A$"
     a_how_wood=r"$erf A = \frac{3 \cdot maxV_{d}}{2 \cdot \tau_{Rd}}$"
-    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": height, "width":width, "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result}
+    result_variant_array = {"title": results_variant_title, "properties": f"Ausgewähltes Profil: {material_choice} {cross_section_wood_input}", "text": results_variant, "profil": material_choice ,"profil_text": f"{material_choice} {cross_section_wood_input}","max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": height, "width":width, "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result,"utilization_w":degree_of_utilization_w,"utilization_i":degree_of_utilization_i,"utilization_a":degree_of_utilization_a}
     return result_variant_array
 # checking the profil and giving an alternativ solution
 def check_profil_wood(counter_variant, cross_section_wood_input, material_choice, width):
@@ -1714,7 +1714,7 @@ def check_ipe(counter_variant, cross_section_input, material_choice, data_storag
     i_how_wood=r"$erf I = k_{0} \cdot max M \cdot l$"
     a_compare_wood=r"$erf A_{Steg} \leq vorh A_{Steg}$"
     a_how_wood=r"$erf A_{Steg} = \frac{maxV_{d}}{\tau_{Rd}}$"
-    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": data_storage[cross_section_input]["h"], "width":data_storage[cross_section_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result}
+    result_variant_array = {"title": results_variant_title,"properties": f"Ausgewähltes Profil: {cross_section_input}", "text": results_variant, "profil": material_choice ,"profil_text":cross_section_input,"max_moment": st.session_state.maximum_moment_check, "weight": safe_weight, "height": data_storage[cross_section_input]["h"], "width":data_storage[cross_section_input]["b"], "erf_a": st.session_state.needed_area, "erf_w": st.session_state.needed_w, "erf_i": st.session_state.needed_i_traegheitsmoment, "image": st.session_state.image_profil_safe, "w_compare": w_compare_wood, "w_how":w_how_wood, "i_compare": i_compare_wood, "i_how":i_how_wood, "a_compare": a_compare_wood, "a_how":a_how_wood, "result_w":result_w, "result_i":result_i, "result_a":result_a, "check_result":counter_result,"utilization_w":degree_of_utilization_w,"utilization_i":degree_of_utilization_i,"utilization_a":degree_of_utilization_a}
     return result_variant_array
 # checking the profil and giving an alternativ solution
 def check_profil_ipe(counter_variant, cross_section_input, material_choice, data_storage):
@@ -1853,14 +1853,17 @@ def variant_comparison():
                 col.write(f"Eigengewicht = {st.session_state.results_variant[i]['weight']}kg")
                 col.write(f"max Moment mit Eigengewicht = {st.session_state.results_variant[i]['max_moment']}kNm")
                 col.write("<strong>Tragfähigkeit:</strong>", unsafe_allow_html=True)
+                col.write(f"Ausnutzungsgrad = {st.session_state.results_variant[i]['utilization_w']}%")
                 col.markdown(st.session_state.results_variant[i]['w_compare'])
                 col.markdown(st.session_state.results_variant[i]['w_how'])
                 col.markdown(st.session_state.results_variant[i]['result_w'])
                 col.write("<strong>Durchbiegungsnachweis:</strong>", unsafe_allow_html=True)
+                col.write(f"Ausnutzungsgrad = {st.session_state.results_variant[i]['utilization_i']}%")
                 col.markdown(st.session_state.results_variant[i]['i_compare'])
                 col.markdown(st.session_state.results_variant[i]['i_how'])
                 col.markdown(st.session_state.results_variant[i]['result_i']) 
                 col.write("<strong>Schubnachweis:</strong>", unsafe_allow_html=True)
+                col.write(f"Ausnutzungsgrad = {st.session_state.results_variant[i]['utilization_a']}%")
                 col.markdown(st.session_state.results_variant[i]['a_compare'])
                 col.markdown(st.session_state.results_variant[i]['a_how'])
                 col.markdown(st.session_state.results_variant[i]['result_a'])
@@ -1892,8 +1895,11 @@ def variant_comparison():
                 Eigengewicht: {st.session_state.results_variant[i]['weight']}kg
                 max Moment mit Eigengewicht: {st.session_state.results_variant[i]['max_moment']}kNm
                 erf A: {st.session_state.results_variant[i]['erf_a']}cm²
+                Ausnutzungsgrad: {st.session_state.results_variant[i]['utilization_a']}%
                 erf W: {st.session_state.results_variant[i]['erf_w']}cm³
-                erf I: {st.session_state.results_variant[i]['erf_i']}cm^4""",
+                Ausnutzungsgrad: {st.session_state.results_variant[i]['utilization_w']}%
+                erf I: {st.session_state.results_variant[i]['erf_i']}cm^4
+                Ausnutzungsgrad: {st.session_state.results_variant[i]['utilization_i']}%""",
                 st.session_state.image_profil_list[st.session_state.results_variant[i]['profil']]
                 ]
                 st.session_state.variant_comparison_list.append(add_variant_list)
