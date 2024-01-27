@@ -1438,7 +1438,7 @@ def check_wood(counter_variant, cross_section_wood_input, material_choice, width
     if is_even(counter_variant)==0:
         results_variant_title = f'''Variante {counter_variant}'''
     else:
-        results_variant_title = f'''alternative zu Variante {counter_variant-1}'''
+        results_variant_title = f'''Alternative zu Variante {counter_variant-1}'''
     # proof of bearing capacity
     # acces the data storage to get the right W
     st.session_state.needed_i_traegheitsmoment=0
@@ -1621,7 +1621,7 @@ def check_ipe(counter_variant, cross_section_input, material_choice, data_storag
     if is_even(counter_variant)==0:
         results_variant_title = f'''Variante {counter_variant}'''
     else:
-        results_variant_title = f'''alternative zu Variante {counter_variant-1}'''
+        results_variant_title = f'''Alternative zu Variante {counter_variant-1}'''
     # proof of bearing capacity
     # acces the data storage to get the right W
     st.session_state.needed_i_traegheitsmoment=0
@@ -2072,6 +2072,5 @@ if export_as_pdf:
                 counter_pictures += 1
                 second_counter += 1
             pdf.ln(10)
-
     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "Dimensionierung Einfeldträger")
     st.markdown(html, unsafe_allow_html=True)
